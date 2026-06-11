@@ -31,6 +31,7 @@ body {
 
 button, a { font: inherit; }
 button { color: inherit; }
+button, input { touch-action: manipulation; }
 
 .ambient {
   position: fixed;
@@ -188,6 +189,10 @@ h1 em { color: var(--cyan); font-style: normal; }
 .next-mission strong { display: block; margin-top: 3px; font: 700 15px "Space Grotesk"; }
 .next-mission p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
 .next-mission-arrow { font-size: 20px !important; }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--cyan-light);
+  outline-offset: 3px;
+}
 
 .daily-row { margin-top: 50px; display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; }
 .daily-row p { margin: 0; }
@@ -509,43 +514,178 @@ h1 em { color: var(--cyan); font-style: normal; }
   .hero-visual { height: 470px; }
   .worlds { grid-template-columns: repeat(3, 1fr); }
   .question-layout { grid-template-columns: 1fr; padding-top: 45px; }
-  .mission-panel { display: grid; grid-template-columns: auto 1fr auto; align-items: center; text-align: left; gap: 16px; }
-  .guide-avatar { margin: 0; }
+  .mission-panel {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) 170px;
+    align-items: center; text-align: left; gap: 16px;
+  }
+  .guide-avatar { grid-column: 1; grid-row: 1; margin: 0; }
   .guide-name { display: none; }
-  .mission-panel blockquote { margin: 0; }
-  .session-stats { border: 0; padding: 0; min-width: 150px; }
+  .mission-panel blockquote { grid-column: 2; grid-row: 1; margin: 0; }
+  .mission-goal { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  .session-stats { grid-column: 3; grid-row: 1; border: 0; padding: 0; min-width: 150px; }
 }
 
 @media (max-width: 650px) {
-  .topbar, main { width: min(100% - 28px, 1180px); }
-  .topbar { height: 75px; }
+  body { background-attachment: fixed; }
+  .topbar, main { width: min(100% - 24px, 1180px); }
+  .topbar {
+    height: 68px; padding-top: env(safe-area-inset-top); gap: 10px;
+  }
+  .brand { flex: 0 0 auto; }
+  .brand-mark { width: 36px; height: 36px; }
   .brand > span:last-child { display: none; }
+  .player-stats { gap: 6px; min-width: 0; }
   .player-chip > span:last-child { display: none; }
-  .player-chip { padding-right: 6px; }
+  .player-chip { height: 42px; padding: 0 5px; }
+  .player-initials { width: 30px; height: 30px; }
+  .stat-pill { min-width: 50px; min-height: 42px; gap: 6px; }
+  .icon-button { width: 42px; height: 42px; flex: 0 0 42px; }
   .level-pill { display: none; }
-  .hero { min-height: auto; padding: 60px 0 50px; }
-  h1 { font-size: 47px; }
-  .hero-copy > p { font-size: 15px; }
+  .hero { min-height: auto; padding: 46px 0 34px; overflow: hidden; }
+  .hero-copy { width: 100%; }
+  .eyebrow { font-size: 9px; letter-spacing: .16em; }
+  h1 { margin: 19px 0 18px; font-size: clamp(42px, 13.5vw, 54px); line-height: .98; }
+  .hero-copy > p { font-size: 15px; line-height: 1.65; }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 8px; }
-  .next-mission { grid-template-columns: 40px 1fr auto; }
-  .hero-visual { height: 390px; transform: scale(.88); margin: -20px -30px; }
+  .hero-actions .primary-button { width: 100%; min-height: 56px; }
+  .hero-actions .text-button { min-height: 48px; }
+  .next-mission { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 13px; gap: 11px; }
+  .next-mission-icon { width: 40px; height: 40px; }
+  .next-mission strong, .next-mission p { overflow-wrap: anywhere; }
+  .hero-visual {
+    width: 100%; height: 355px; margin: 8px 0 -15px; transform: none;
+    overflow: hidden;
+  }
+  .hero-visual > * { transform-origin: center; }
+  .orbit-one { width: 320px; height: 320px; }
+  .orbit-two { width: 390px; height: 180px; }
+  .bot { transform: translate(-50%, -46%) scale(.8); }
+  @keyframes hover { 50% { transform: translate(-50%, -50%) scale(.8); } }
+  .knowledge-card { right: 5px; bottom: 18px; transform: scale(.86); transform-origin: right bottom; }
+  .chip-one { left: 4%; }
+  .chip-two { right: 3%; }
+  .chip-three { right: 7%; }
   .daily-row { margin-top: 30px; }
-  .section-heading { align-items: flex-start; flex-direction: column; }
+  .journey-section { padding: 48px 0 70px; }
+  .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; margin-bottom: 24px; }
+  .section-heading h2 { font-size: 28px; }
+  .section-heading > p { margin: 6px 0 0; }
   .worlds { grid-template-columns: 1fr; }
-  .world-card { min-height: 185px; }
-  .game-shell { width: min(100% - 24px, 1100px); }
-  .question-layout { padding-top: 25px; }
-  .quiz-card { padding: 28px 20px 24px; min-height: auto; }
+  .world-card {
+    min-height: 160px; padding: 18px 18px 42px;
+    display: grid; grid-template-columns: 50px 1fr; grid-template-rows: auto auto; column-gap: 14px;
+  }
+  .world-number { position: absolute; left: auto; right: 18px; bottom: 37px; font-size: 54px; }
+  .world-icon { grid-row: 1 / 3; width: 50px; height: 50px; margin: 9px 0 0; }
+  .world-card h3 { align-self: end; margin-top: 10px; }
+  .world-card p { max-width: 245px; }
+  .world-state { top: 16px; right: 16px; }
+  .site-footer { width: calc(100% - 24px); flex-direction: column; text-align: center; line-height: 1.6; }
+  .game-shell {
+    width: 100%; min-height: 100dvh; padding: 0 12px calc(24px + env(safe-area-inset-bottom));
+  }
+  .game-header {
+    position: sticky; top: 0; z-index: 5; display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 65px; gap: 9px;
+    margin: 0 -12px; padding: calc(10px + env(safe-area-inset-top)) 12px 11px;
+    background: rgba(5,17,37,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
+  }
+  .close-button { width: 44px; height: 44px; }
+  .game-progress-wrap > span {
+    max-width: 100%; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 9px;
+  }
+  .timer-pill { grid-column: 3; grid-row: 1; min-width: 65px; height: 44px; padding: 0 8px; }
+  .question-counter {
+    grid-column: 3; grid-row: 2; text-align: center; margin-top: -11px; font-size: 10px;
+  }
+  .question-layout { padding-top: 14px; gap: 12px; }
+  .quiz-card { padding: 22px 16px 18px; min-height: auto; border-radius: 15px; }
+  .difficulty { padding: 6px 9px; font-size: 8px; }
+  .question-topic { margin: 17px 0 8px; }
+  .quiz-card h2 { margin-bottom: 22px; font-size: clamp(23px, 7vw, 30px); line-height: 1.28; }
   .answers { grid-template-columns: 1fr; }
-  .mission-panel { grid-template-columns: auto 1fr; }
-  .session-stats { display: none; }
-  .lesson-card { padding: 26px 20px; }
+  .answer-button { min-height: 64px; padding: 12px 13px; font-size: 14px; line-height: 1.4; }
+  .answer-button:active, .primary-button:active, .next-mission:active { transform: scale(.985); }
+  .answer-button .answer-key { flex-basis: 36px; width: 36px; height: 36px; }
+  .keyboard-hint { display: none; }
+  .mission-panel {
+    padding: 15px; display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 10px 13px;
+    text-align: left; border-radius: 15px;
+  }
+  .guide-avatar { width: 50px; height: 50px; border-radius: 16px; padding: 6px; grid-row: 1 / 3; }
+  .mini-bot-face { border-radius: 11px; }
+  .mini-bot-face i { width: 6px; height: 10px; top: 14px; }
+  .mini-bot-face i:first-child { left: 10px; }
+  .mini-bot-face i:last-child { right: 10px; }
+  .guide-name { display: block; grid-column: 2; grid-row: 1; margin: 2px 0 -7px; }
+  .mission-panel blockquote { grid-column: 2; grid-row: 2; margin: 0; font-size: 12px; line-height: 1.45; }
+  .mission-goal { grid-column: 1 / -1; grid-row: 3; margin: 1px 0 0; padding: 12px; }
+  .session-stats { grid-column: 1 / -1; grid-row: 4; display: grid; padding-top: 12px; }
+  .session-stats strong { font-size: 18px; }
+  .modal-backdrop {
+    align-items: flex-end; padding: 0; overflow: hidden;
+  }
+  .lesson-card {
+    width: 100%; max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top)));
+    padding: 25px 18px calc(22px + env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0; border-bottom: 0;
+    overscroll-behavior: contain; scrollbar-width: thin;
+  }
+  .lesson-card::before {
+    content: ""; display: block; width: 42px; height: 4px; margin: -12px auto 17px;
+    border-radius: 10px; background: rgba(255,255,255,.2);
+  }
+  .lesson-card h2 { font-size: 25px; line-height: 1.25; }
   .lesson-top { align-items: flex-start; }
+  .lesson-icon { width: 46px; height: 46px; flex-basis: 46px; }
+  .lesson-intro { font-size: 14px; line-height: 1.55; }
+  .full-button { min-height: 56px; }
   .form-grid { grid-template-columns: 1fr; }
+  .form-grid input, .otp-field input { font-size: 16px; }
+  .consent-field { font-size: 12px; }
+  .result-score { width: 98px; height: 98px; margin-bottom: 18px; font-size: 29px; }
+  .result-details { gap: 8px; }
+  .result-details > div { padding: 12px 8px; }
+  .result-details strong { font-size: 16px; }
   .welcome-heading { align-items: flex-start; }
   .welcome-avatar { width: 58px; height: 58px; flex-basis: 58px; border-radius: 17px; }
   .welcome-grid { grid-template-columns: 1fr; }
-  .welcome-grid > div { min-height: 0; }
+  .welcome-grid > div {
+    min-height: 0; padding: 13px 15px; display: grid; grid-template-columns: 35px 1fr; align-items: center; gap: 10px;
+  }
+  .welcome-grid strong { margin: 0; font-size: 17px; }
+  .welcome-benefit, .resume-summary { padding: 14px; }
+  .profile-avatar { width: 76px; height: 76px; border-radius: 22px; margin-bottom: 16px; }
+  .modal-close { top: 14px; right: 14px; width: 44px; height: 44px; }
+  .toast {
+    left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom));
+    width: auto; text-align: center; transform: translateY(100px);
+  }
+  .toast.visible { transform: translateY(0); }
+}
+
+@media (max-width: 430px) {
+  .player-stats .stat-pill:nth-of-type(2) { display: none; }
+  h1 { font-size: clamp(40px, 13.2vw, 50px); }
+  .daily-row { align-items: flex-start; font-size: 11px; }
+  .avatars { flex: 0 0 auto; }
+  .game-progress-wrap > span { max-width: 150px; }
+  .welcome-heading { gap: 12px; }
+  .welcome-heading .eyebrow { line-height: 1.35; }
+  .result-reward, .next-world-preview { padding: 13px; }
+}
+
+@media (max-width: 360px) {
+  .topbar, main { width: min(100% - 18px, 1180px); }
+  .stat-pill { min-width: 46px; }
+  .next-mission { grid-template-columns: 36px minmax(0, 1fr) auto; padding: 11px; }
+  .next-mission-icon { width: 36px; height: 36px; }
+  .next-mission-arrow { display: none; }
+  .game-header { grid-template-columns: 42px minmax(0, 1fr) 61px; padding-inline: 9px; }
+  .game-shell { padding-inline: 9px; }
+  .quiz-card { padding-inline: 13px; }
+  .answer-button { padding-inline: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
