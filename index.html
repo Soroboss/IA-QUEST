@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07152e">
+  <meta name="description" content="IA Quest, un jeu éducatif adaptatif pour comprendre l'intelligence artificielle.">
+  <title>IA Quest - Apprends. Joue. Progresse.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Accueil IA Quest">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 42 42"><path d="M13 16.5a7 7 0 0 1 13.7-2.2A6.5 6.5 0 0 1 29 27H13.5A5.5 5.5 0 0 1 13 16.5Z"/><path d="M15 20h12M18 15v12M24 14v14"/></svg>
+      </span>
+      <span>IA <strong>QUEST</strong><small>par Soroboss</small></span>
+    </a>
+
+    <div class="player-stats">
+      <button class="player-chip" id="player-chip" type="button" aria-label="Voir mon profil">
+        <span class="player-initials" id="player-initials">?</span>
+        <span id="player-name">Invité</span>
+      </button>
+      <div class="stat-pill" title="Vies restantes">
+        <span class="stat-icon heart">♥</span>
+        <strong id="lives-count">3</strong>
+      </div>
+      <div class="stat-pill" title="Série de bonnes réponses">
+        <span class="stat-icon flame">◆</span>
+        <strong id="streak-count">0</strong>
+      </div>
+      <div class="level-pill">
+        <span>NIV. <strong id="player-level">1</strong></span>
+        <div class="mini-progress"><span id="level-progress"></span></div>
+        <span id="xp-count">0 XP</span>
+      </div>
+      <button class="icon-button" id="sound-toggle" aria-label="Activer ou désactiver les sons" title="Son">
+        <span aria-hidden="true">♪</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero-screen">
+      <div class="hero-copy">
+        <div class="eyebrow"><span></span> MISSION DU JOUR</div>
+        <h1>Décode l’IA.<br><em>Deviens incollable.</em></h1>
+        <p>Explore les secrets de l’intelligence artificielle à travers des défis qui s’adaptent à toi. Chaque erreur devient une nouvelle force.</p>
+        <div class="hero-actions">
+          <button class="primary-button" id="start-button">
+            Commencer l’aventure
+            <span aria-hidden="true">→</span>
+          </button>
+          <button class="text-button" id="how-button">Comment jouer ?</button>
+        </div>
+        <div class="daily-row">
+          <div class="avatars" aria-hidden="true">
+            <span>AK</span><span>LM</span><span>JO</span>
+          </div>
+          <p><strong>2 847</strong> explorateurs ont joué aujourd’hui</p>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="floating-chip chip-one">01</div>
+        <div class="floating-chip chip-two">AI</div>
+        <div class="floating-chip chip-three">∞</div>
+        <div class="bot-shadow"></div>
+        <div class="bot">
+          <div class="antenna"><span></span></div>
+          <div class="bot-head">
+            <div class="bot-face">
+              <i></i><i></i>
+              <b></b>
+            </div>
+          </div>
+          <div class="bot-body">
+            <div class="core"><span></span></div>
+          </div>
+          <div class="bot-arm arm-left"></div>
+          <div class="bot-arm arm-right"></div>
+        </div>
+        <div class="knowledge-card">
+          <span class="tiny-label">ANALYSE</span>
+          <strong>+ 20 XP</strong>
+          <div><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="journey-section" aria-labelledby="journey-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow"><span></span> TON PARCOURS</span>
+          <h2 id="journey-title">5 mondes à explorer</h2>
+        </div>
+        <p id="journey-status">0 / 5 mondes maîtrisés</p>
+      </div>
+
+      <div class="worlds" id="worlds-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Une expérience éducative imaginée par</span>
+    <strong>SOROBOSS</strong>
+  </footer>
+
+  <section class="game-screen" id="game-screen" aria-hidden="true">
+    <div class="game-shell">
+      <div class="game-header">
+        <button class="close-button" id="close-game" aria-label="Quitter la partie">×</button>
+        <div class="game-progress-wrap">
+          <span id="game-world-label">Monde 1 · Les fondations</span>
+          <div class="game-progress"><span id="game-progress-bar"></span></div>
+        </div>
+        <div class="timer-pill" id="timer-pill" aria-label="Temps restant">
+          <span class="timer-icon">◷</span>
+          <strong id="timer-count">20</strong>
+          <span>s</span>
+        </div>
+        <span class="question-counter" id="question-counter">1 / 5</span>
+      </div>
+
+      <div class="question-layout">
+        <article class="quiz-card">
+          <div class="difficulty" id="difficulty-label">NIVEAU DÉCOUVERTE</div>
+          <p class="question-topic" id="question-topic">LES FONDATIONS DE L’IA</p>
+          <h2 id="question-text"></h2>
+          <div class="answers" id="answers-list"></div>
+          <p class="keyboard-hint">Astuce : utilise les touches 1 à 4 pour répondre</p>
+        </article>
+
+        <aside class="mission-panel">
+          <div class="guide-avatar">
+            <div class="mini-bot-face"><i></i><i></i></div>
+          </div>
+          <p class="guide-name">NOVA · TON GUIDE</p>
+          <blockquote id="guide-message">Observe bien les indices. Tu as tout ce qu’il faut pour réussir.</blockquote>
+          <div class="session-stats">
+            <div><span>Score</span><strong id="session-score">0</strong></div>
+            <div><span>Série</span><strong id="session-streak">0</strong></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" id="lesson-modal" aria-hidden="true">
+    <article class="lesson-card" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
+      <div class="lesson-top">
+        <div class="lesson-icon">!</div>
+        <div>
+          <span class="eyebrow error-eyebrow">MISSION D’APPRENTISSAGE</span>
+          <h2 id="lesson-title">Transformons cette erreur en force</h2>
+        </div>
+      </div>
+      <p class="lesson-intro" id="lesson-intro"></p>
+      <div class="lesson-content">
+        <span>À RETENIR</span>
+        <p id="lesson-text"></p>
+      </div>
+      <div class="lesson-example">
+        <span>EXEMPLE CONCRET</span>
+        <p id="lesson-example"></p>
+      </div>
+      <button class="primary-button full-button" id="continue-lesson">J’ai compris, continuer <span>→</span></button>
+    </article>
+  </div>
+
+  <div class="modal-backdrop" id="result-modal" aria-hidden="true">
+    <article class="lesson-card result-card" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <div class="result-score" id="result-score">80%</div>
+      <span class="eyebrow result-eyebrow" id="result-eyebrow">NIVEAU RÉUSSI</span>
+      <h2 id="result-title">Excellent travail !</h2>
+      <p class="lesson-intro" id="result-message"></p>
+      <div class="result-details">
+        <div><span>Bonnes réponses</span><strong id="result-correct">4 / 5</strong></div>
+        <div><span>Seuil requis</span><strong>80 %</strong></div>
+      </div>
+      <button class="primary-button full-button" id="result-action">Continuer <span>→</span></button>
+    </article>
+  </div>
+
+  <div class="modal-backdrop" id="register-modal" aria-hidden="true">
+    <article class="lesson-card register-card" role="dialog" aria-modal="true" aria-labelledby="register-title">
+      <span class="eyebrow"><span></span> CRÉER MON PROFIL</span>
+      <h2 id="register-title">Bienvenue dans IA Quest</h2>
+      <p class="lesson-intro">Présente-toi avant de commencer. Ta progression sera enregistrée sur cet appareil.</p>
+      <form id="register-form">
+        <div class="form-grid">
+          <label><span>Prénom</span><input id="register-firstname" name="firstname" type="text" autocomplete="given-name" required minlength="2" placeholder="Ex. Aïcha"></label>
+          <label><span>Nom</span><input id="register-lastname" name="lastname" type="text" autocomplete="family-name" required minlength="2" placeholder="Ex. Koné"></label>
+          <label><span>Numéro WhatsApp</span><input id="register-phone" name="phone" type="tel" autocomplete="tel" required pattern="[+0-9 ()-]{8,20}" placeholder="Ex. +225 07 00 00 00 00"></label>
+          <label><span>Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="nom@exemple.com"></label>
+        </div>
+        <p class="privacy-note">Ces informations restent uniquement dans ton navigateur.</p>
+        <button class="primary-button full-button" type="submit">Créer mon profil et jouer <span>→</span></button>
+      </form>
+    </article>
+  </div>
+
+  <div class="modal-backdrop" id="profile-modal" aria-hidden="true">
+    <article class="lesson-card profile-card" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+      <button class="modal-close" id="close-profile" aria-label="Fermer">×</button>
+      <div class="profile-avatar" id="profile-avatar">SK</div>
+      <span class="eyebrow result-eyebrow">PROFIL IA QUEST</span>
+      <h2 id="profile-title">Profil de progression</h2>
+      <p class="profile-fullname" id="profile-fullname"></p>
+      <div class="profile-rank" id="profile-rank">Explorateur IA</div>
+      <div class="result-details profile-details">
+        <div><span>Mondes maîtrisés</span><strong id="profile-worlds">0 / 10</strong></div>
+        <div><span>Niveau général</span><strong id="profile-level">1</strong></div>
+        <div><span>Expérience</span><strong id="profile-xp">0 XP</strong></div>
+        <div><span>Parcours</span><strong id="profile-chapter">Initiation</strong></div>
+      </div>
+      <p class="profile-message" id="profile-message"></p>
+      <button class="primary-button full-button" id="profile-action">Continuer mon aventure <span>→</span></button>
+      <button class="text-button profile-logout" id="logout-player">Changer de joueur</button>
+      <p class="sorobos-signature">Certifié par <strong>Soroboss</strong></p>
+    </article>
+  </div>
+
+  <div class="modal-backdrop" id="info-modal" aria-hidden="true">
+    <article class="lesson-card info-card" role="dialog" aria-modal="true" aria-labelledby="info-title">
+      <button class="modal-close" id="close-info" aria-label="Fermer">×</button>
+      <span class="eyebrow"><span></span> RÈGLES DU JEU</span>
+      <h2 id="info-title">Apprendre en jouant</h2>
+      <div class="rules-grid">
+        <div><strong>01</strong><p>Choisis un monde et réponds à 5 questions.</p></div>
+        <div><strong>02</strong><p>Enchaîne les bonnes réponses pour gagner plus d’XP.</p></div>
+        <div><strong>03</strong><p>Obtiens au moins 80 %. Sinon, lis les cours de tes erreurs avant de recommencer.</p></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js?v=4"></script>
+</body>
+</html>
