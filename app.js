@@ -1,3 +1,16 @@
+import {
+  backendConfigured,
+  createRemotePlayer,
+  getCurrentAccount,
+  loadRemotePlayer,
+  saveRemoteProgress,
+  saveWorldAttempt,
+  signInAccount,
+  signOutAccount,
+  signUpAccount,
+  verifyAccount
+} from "./insforge.js";
+
 const worlds = [
   {
     title: "Les fondations",
@@ -307,10 +320,14 @@ const defaultState = {
   completedWorlds: [],
   sound: true,
   player: null,
-  profileMilestones: []
+  profileMilestones: [],
+  userId: null
 };
 
 let state = loadState();
+let authMode = "register";
+let pendingRegistration = null;
+let remoteSaveTimer = null;
 let session = {
   worldIndex: 0,
   questionIndex: 0,
@@ -360,6 +377,8 @@ const elements = {
   resultAction: $("#result-action"),
   registerModal: $("#register-modal"),
   registerForm: $("#register-form"),
+  verifyModal: $("#verify-modal"),
+  verifyForm: $("#verify-form"),
   profileModal: $("#profile-modal"),
   infoModal: $("#info-modal"),
   toast: $("#toast")
@@ -374,6 +393,36 @@ function loadState() {
 }
 
 function saveState() {
+  localStorage.setItem("iaQuestState", JSON.stringify(state));
+  if (state.userId && backendConfigured) {
+    clearTimeout(remoteSaveTimer);
+    remoteSaveTimer = setTimeout(() => {
+      saveRemoteProgress(state.userId, state).catch(() => {
+        showToast("Progression conservée localement, synchronisation en attente.", "error");
+      });
+    }, 450);
+  }
+}
+
+function applyRemoteState(user, player, progress) {
+  state = {
+    ...defaultState,
+    ...state,
+    userId: user.id,
+    player: player ? {
+      firstname: player.firstname,
+      lastname: player.lastname,
+      phone: player.whatsapp,
+      email: player.email,
+      registeredAt: player.created_at
+    } : null,
+    xp: progress?.xp ?? 0,
+    lives: progress?.lives ?? 3,
+    streak: progress?.streak ?? 0,
+    unlockedWorld: progress?.unlocked_world ?? 0,
+    completedWorlds: progress?.completed_worlds ?? [],
+    profileMilestones: progress?.profile_milestones ?? []
+  };
   localStorage.setItem("iaQuestState", JSON.stringify(state));
 }
 
@@ -583,6 +632,18 @@ function showWorldResult() {
   const total = session.questions.length;
   const percentage = Math.round((session.correctCount / total) * 100);
   const passed = percentage >= 80;
+  const timedOutCount = session.errors.filter((error) => error.timedOut).length;
+
+  saveWorldAttempt(state.userId, {
+    worldIndex: session.worldIndex,
+    percentage,
+    correctCount: session.correctCount,
+    total,
+    passed,
+    timedOutCount
+  }).catch(() => {
+    showToast("La note sera resynchronisée lors de la prochaine connexion.", "error");
+  });
 
   elements.resultScore.textContent = `${percentage}%`;
   elements.resultCorrect.textContent = `${session.correctCount} / ${total}`;
@@ -663,10 +724,85 @@ function getProfileRank() {
 }
 
 function openRegister() {
+  setAuthMode("register");
   elements.registerModal.classList.add("visible");
   elements.registerModal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
   setTimeout(() => $("#register-firstname").focus(), 50);
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isLogin = mode === "login";
+  ["#register-firstname", "#register-lastname", "#register-phone"].forEach((selector) => {
+    const input = $(selector);
+    input.required = !isLogin;
+    input.closest("label").hidden = isLogin;
+  });
+  $("#register-consent").required = !isLogin;
+  $("#register-consent").closest("label").hidden = isLogin;
+  $(".privacy-note").hidden = isLogin;
+  $("#register-password").autocomplete = isLogin ? "current-password" : "new-password";
+  $("#register-title").textContent = isLogin ? "Reprendre mon aventure" : "Bienvenue dans IA Quest";
+  $("#register-submit").innerHTML = isLogin
+    ? `Se connecter <span>→</span>`
+    : `Créer mon profil <span>→</span>`;
+  $("#show-login").textContent = isLogin ? "Créer un nouveau compte" : "J’ai déjà un compte";
+}
+
+function openVerification(email) {
+  closeRegister();
+  $("#verify-email").textContent = email;
+  elements.verifyModal.classList.add("visible");
+  elements.verifyModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#verify-code").focus(), 50);
+}
+
+function closeVerification() {
+  elements.verifyModal.classList.remove("visible");
+  elements.verifyModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+async function finishAuthenticatedPlayer(user, playerData = null) {
+  let { player, progress } = await loadRemotePlayer(user.id);
+  if (!player && playerData) {
+    await createRemotePlayer(user, playerData);
+    ({ player, progress } = await loadRemotePlayer(user.id));
+  }
+  if (!player) {
+    throw new Error("Le profil joueur est incomplet. Crée ton profil pour continuer.");
+  }
+  applyRemoteState(user, player, progress);
+  closeRegister();
+  closeVerification();
+  renderDashboard();
+  showToast(`Bienvenue ${state.player.firstname} ! Progression synchronisée.`, "success");
+}
+
+async function initializeAccount() {
+  renderDashboard();
+  if (!backendConfigured) {
+    showToast("InsForge n’est pas configuré sur cet environnement.", "error");
+    return;
+  }
+  try {
+    const user = await getCurrentAccount();
+    if (!user) {
+      state.userId = null;
+      state.player = null;
+      localStorage.setItem("iaQuestState", JSON.stringify(state));
+      renderDashboard();
+      return;
+    }
+    await finishAuthenticatedPlayer(user);
+  } catch {
+    state.userId = null;
+    state.player = null;
+    localStorage.setItem("iaQuestState", JSON.stringify(state));
+    renderDashboard();
+  }
 }
 
 function closeRegister() {
@@ -770,6 +906,7 @@ document.addEventListener("keydown", (event) => {
     elements.lessonModal.classList.contains("visible")
     || elements.resultModal.classList.contains("visible")
     || elements.registerModal.classList.contains("visible")
+    || elements.verifyModal.classList.contains("visible")
     || elements.profileModal.classList.contains("visible")
     || elements.infoModal.classList.contains("visible")
   ) return;
@@ -810,26 +947,73 @@ $("#close-info").addEventListener("click", () => {
   elements.infoModal.classList.remove("visible");
   elements.infoModal.setAttribute("aria-hidden", "true");
 });
-elements.registerForm.addEventListener("submit", (event) => {
+elements.registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!elements.registerForm.reportValidity()) return;
-  state.player = {
-    firstname: $("#register-firstname").value.trim(),
-    lastname: $("#register-lastname").value.trim(),
-    phone: $("#register-phone").value.trim(),
-    email: $("#register-email").value.trim().toLowerCase(),
-    registeredAt: new Date().toISOString()
-  };
-  saveState();
-  closeRegister();
-  renderDashboard();
-  showToast(`Bienvenue ${state.player.firstname} ! Ton profil est prêt.`, "success");
-  startWorld(state.unlockedWorld);
+  const submitButton = $("#register-submit");
+  submitButton.disabled = true;
+  const email = $("#register-email").value.trim().toLowerCase();
+  const password = $("#register-password").value;
+  try {
+    if (authMode === "login") {
+      const data = await signInAccount(email, password);
+      await finishAuthenticatedPlayer(data.user);
+      startWorld(state.unlockedWorld);
+      return;
+    }
+
+    pendingRegistration = {
+      firstname: $("#register-firstname").value.trim(),
+      lastname: $("#register-lastname").value.trim(),
+      phone: $("#register-phone").value.trim(),
+      email
+    };
+    const data = await signUpAccount({
+      email,
+      password,
+      firstname: pendingRegistration.firstname,
+      lastname: pendingRegistration.lastname
+    });
+    if (data?.requireEmailVerification) {
+      openVerification(email);
+    } else if (data?.user) {
+      await finishAuthenticatedPlayer(data.user, pendingRegistration);
+      startWorld(state.unlockedWorld);
+    }
+  } catch (error) {
+    showToast(error.message || "Impossible de créer le compte.", "error");
+  } finally {
+    submitButton.disabled = false;
+  }
 });
+elements.verifyForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!elements.verifyForm.reportValidity() || !pendingRegistration) return;
+  const button = elements.verifyForm.querySelector("button");
+  button.disabled = true;
+  try {
+    const data = await verifyAccount(pendingRegistration.email, $("#verify-code").value);
+    await finishAuthenticatedPlayer(data.user, pendingRegistration);
+    pendingRegistration = null;
+    elements.registerForm.reset();
+    elements.verifyForm.reset();
+    startWorld(state.unlockedWorld);
+  } catch (error) {
+    showToast(error.message || "Code invalide ou expiré.", "error");
+  } finally {
+    button.disabled = false;
+  }
+});
+$("#show-login").addEventListener("click", () => setAuthMode(authMode === "login" ? "register" : "login"));
 $("#player-chip").addEventListener("click", () => openProfile());
 $("#close-profile").addEventListener("click", closeProfile);
 $("#profile-action").addEventListener("click", closeProfile);
-$("#logout-player").addEventListener("click", () => {
+$("#logout-player").addEventListener("click", async () => {
+  try {
+    await signOutAccount();
+  } catch {
+    showToast("La session distante n’a pas pu être fermée.", "error");
+  }
   const soundPreference = state.sound;
   state = { ...defaultState, sound: soundPreference };
   saveState();
@@ -846,4 +1030,4 @@ $("#sound-toggle").addEventListener("click", () => {
   showToast(state.sound ? "Sons activés" : "Sons désactivés");
 });
 
-renderDashboard();
+initializeAccount();

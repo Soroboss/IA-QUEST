@@ -13,3 +13,9 @@
 .roo
 .trae
 .windsurf
+.env
+.env.local
+.env*.local
+node_modules
+dist
+skills-lock.json
