@@ -514,7 +514,7 @@ function startWorld(worldIndex = state.unlockedWorld) {
     correctCount: 0, errors: [], reviewIndex: 0, timer: null, timeLeft: 20,
     questions: shuffleQuestions(worlds[worldIndex].questions)
   };
-  prepareAudio();
+  unlockAudio();
   persistActiveSession();
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
@@ -589,7 +589,9 @@ function updateTimer() {
   elements.timerCount.textContent = session.timeLeft;
   elements.timerPill.classList.toggle("warning", session.timeLeft <= 10 && session.timeLeft > 5);
   elements.timerPill.classList.toggle("danger", session.timeLeft <= 5);
-  if (session.timeLeft <= 10 && session.timeLeft > 0 && lastTimerSound !== session.timeLeft) {
+  const shouldPulse = session.timeLeft > 0
+    && (session.timeLeft <= 10 || session.timeLeft % 2 === 0);
+  if (shouldPulse && lastTimerSound !== session.timeLeft) {
     lastTimerSound = session.timeLeft;
     playTimerPulse(session.timeLeft);
   }
@@ -839,6 +841,7 @@ function resumeActiveSession() {
     timer: null,
     timeLeft: 20
   };
+  unlockAudio();
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -1046,13 +1049,22 @@ function prepareAudio() {
     if (!audioContext) {
       audioContext = new AudioContext();
       masterGain = audioContext.createGain();
-      masterGain.gain.value = 0.32;
+      masterGain.gain.value = 0.58;
       masterGain.connect(audioContext.destination);
     }
-    if (audioContext.state === "suspended") audioContext.resume();
     return audioContext;
   } catch {
     return null;
+  }
+}
+
+function unlockAudio() {
+  const context = prepareAudio();
+  if (!context) return;
+  if (context.state === "suspended") {
+    context.resume().then(() => playSound("missionStart")).catch(() => {});
+  } else {
+    playSound("missionStart");
   }
 }
 
@@ -1074,10 +1086,14 @@ function scheduleNote(frequency, start, duration, volume = 0.08, type = "sine") 
 
 function playTimerPulse(secondsLeft) {
   const context = prepareAudio();
-  if (!context) return;
+  if (!context || context.state !== "running") return;
   const urgent = secondsLeft <= 5;
-  scheduleNote(urgent ? 165 : 120, context.currentTime, urgent ? 0.11 : 0.07, urgent ? 0.045 : 0.025, "sine");
-  if (urgent) scheduleNote(220, context.currentTime + 0.08, 0.08, 0.025, "sine");
+  const tense = secondsLeft <= 10;
+  const baseFrequency = urgent ? 130 : tense ? 112 : 98;
+  const firstVolume = urgent ? 0.13 : tense ? 0.105 : 0.08;
+  const secondVolume = urgent ? 0.1 : tense ? 0.075 : 0.055;
+  scheduleNote(baseFrequency, context.currentTime, urgent ? 0.13 : 0.11, firstVolume, "sine");
+  scheduleNote(baseFrequency * 1.35, context.currentTime + (urgent ? 0.13 : 0.16), 0.1, secondVolume, "sine");
 }
 
 function playSound(type) {
@@ -1085,6 +1101,7 @@ function playSound(type) {
   if (!context) return;
   const now = context.currentTime;
   const melodies = {
+    missionStart: [[196, 0, .1, .055, "sine"], [294, .1, .16, .06, "sine"]],
     correct: [[523, 0, .12, .08], [659, .1, .14, .075], [784, .2, .18, .07]],
     wrong: [[220, 0, .16, .07, "triangle"], [165, .13, .24, .065, "triangle"]],
     timeout: [[260, 0, .1, .06, "square"], [195, .11, .1, .055, "square"], [130, .22, .28, .06, "triangle"]],
@@ -1280,10 +1297,9 @@ $("#logout-player").addEventListener("click", async () => {
 });
 $("#sound-toggle").addEventListener("click", () => {
   state.sound = !state.sound;
-  if (masterGain) masterGain.gain.value = state.sound ? 0.32 : 0;
+  if (masterGain) masterGain.gain.value = state.sound ? 0.58 : 0;
   if (state.sound) {
-    prepareAudio();
-    playSound("correct");
+    unlockAudio();
   }
   saveState();
   renderDashboard();
