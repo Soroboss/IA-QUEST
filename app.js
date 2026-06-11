@@ -322,6 +322,7 @@ const defaultState = {
   sound: true,
   player: null,
   profileMilestones: [],
+  activeSession: null,
   userId: null
 };
 
@@ -380,6 +381,7 @@ const elements = {
   registerForm: $("#register-form"),
   verifyModal: $("#verify-modal"),
   verifyForm: $("#verify-form"),
+  welcomeModal: $("#welcome-modal"),
   profileModal: $("#profile-modal"),
   infoModal: $("#info-modal"),
   toast: $("#toast")
@@ -422,7 +424,8 @@ function applyRemoteState(user, player, progress) {
     streak: progress?.streak ?? 0,
     unlockedWorld: progress?.unlocked_world ?? 0,
     completedWorlds: progress?.completed_worlds ?? [],
-    profileMilestones: progress?.profile_milestones ?? []
+    profileMilestones: progress?.profile_milestones ?? [],
+    activeSession: progress?.active_session ?? null
   };
   localStorage.setItem("iaQuestState", JSON.stringify(state));
 }
@@ -485,6 +488,7 @@ function startWorld(worldIndex = state.unlockedWorld) {
     correctCount: 0, errors: [], reviewIndex: 0, timer: null, timeLeft: 20,
     questions: shuffleQuestions(worlds[worldIndex].questions)
   };
+  persistActiveSession();
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -500,6 +504,7 @@ function renderQuestion() {
   const question = currentQuestion();
   const displayIndex = session.questionIndex + 1;
   session.answered = false;
+  persistActiveSession();
   startTimer();
 
   elements.gameWorld.textContent = `Monde ${session.worldIndex + 1} · ${world.title}`;
@@ -586,6 +591,10 @@ function answerQuestion(answerIndex, timedOut = false) {
     renderDashboard();
     setTimeout(nextQuestion, 900);
   }
+  const nextIndex = session.questionIndex + 1;
+  if (nextIndex < session.questions.length) {
+    persistActiveSession({ questionIndex: nextIndex, answered: false, timeLeft: 20 });
+  }
 }
 
 function showLesson(error) {
@@ -628,23 +637,26 @@ function nextQuestion() {
   renderQuestion();
 }
 
-function showWorldResult() {
+function showWorldResult({ recordAttempt = true } = {}) {
   clearInterval(session.timer);
   const total = session.questions.length;
   const percentage = Math.round((session.correctCount / total) * 100);
   const passed = percentage >= 80;
   const timedOutCount = session.errors.filter((error) => error.timedOut).length;
 
-  saveWorldAttempt(state.userId, {
-    worldIndex: session.worldIndex,
-    percentage,
-    correctCount: session.correctCount,
-    total,
-    passed,
-    timedOutCount
-  }).catch(() => {
-    showToast("La note sera resynchronisée lors de la prochaine connexion.", "error");
-  });
+  persistActiveSession({ status: "result", questionIndex: session.questions.length });
+  if (recordAttempt) {
+    saveWorldAttempt(state.userId, {
+      worldIndex: session.worldIndex,
+      percentage,
+      correctCount: session.correctCount,
+      total,
+      passed,
+      timedOutCount
+    }).catch(() => {
+      showToast("La note sera resynchronisée lors de la prochaine connexion.", "error");
+    });
+  }
 
   elements.resultScore.textContent = `${percentage}%`;
   elements.resultCorrect.textContent = `${session.correctCount} / ${total}`;
@@ -669,6 +681,7 @@ function completeWorld() {
     state.xp += 50;
   }
   state.unlockedWorld = Math.min(worlds.length - 1, Math.max(state.unlockedWorld, worldIndex + 1));
+  state.activeSession = null;
   saveState();
   renderDashboard();
   closeResult();
@@ -713,6 +726,81 @@ function shuffleAnswers(question) {
 
 function getInitials(player) {
   return `${player.firstname?.[0] || ""}${player.lastname?.[0] || ""}`.toUpperCase();
+}
+
+function persistActiveSession(overrides = {}) {
+  if (!session.questions?.length) return;
+  const { timer, ...serializableSession } = session;
+  state.activeSession = {
+    ...serializableSession,
+    status: "playing",
+    savedAt: new Date().toISOString(),
+    ...overrides
+  };
+  saveState();
+}
+
+function hasResumableSession() {
+  const saved = state.activeSession;
+  return Boolean(
+    saved
+    && Array.isArray(saved.questions)
+    && saved.questions.length
+    && saved.worldIndex >= 0
+    && saved.worldIndex < worlds.length
+    && !state.completedWorlds.includes(saved.worldIndex)
+  );
+}
+
+function resumeActiveSession() {
+  if (!hasResumableSession()) {
+    startWorld(state.unlockedWorld);
+    return;
+  }
+  session = {
+    ...state.activeSession,
+    answered: false,
+    timer: null,
+    timeLeft: 20
+  };
+  elements.game.classList.add("visible");
+  elements.game.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  if (state.activeSession.status === "result") {
+    showWorldResult({ recordAttempt: false });
+  } else {
+    renderQuestion();
+  }
+}
+
+function openWelcome() {
+  if (!state.player) return;
+  const canResume = hasResumableSession();
+  $("#welcome-avatar").textContent = getInitials(state.player);
+  $("#welcome-name").textContent = state.player.firstname;
+  $("#resume-summary").hidden = !canResume;
+  if (canResume) {
+    const saved = state.activeSession;
+    const world = worlds[saved.worldIndex];
+    const questionNumber = Math.min(saved.questionIndex + 1, saved.questions.length);
+    $("#resume-title").textContent = saved.status === "result"
+      ? `Monde ${saved.worldIndex + 1} · Résultat à consulter`
+      : `Monde ${saved.worldIndex + 1} · ${world.title} · Question ${questionNumber} sur ${saved.questions.length}`;
+  }
+  $("#welcome-action").innerHTML = canResume
+    ? `Reprendre ma partie <span>→</span>`
+    : state.completedWorlds.length === worlds.length
+      ? `Voir mon profil final <span>→</span>`
+      : `Commencer le monde ${state.unlockedWorld + 1} <span>→</span>`;
+  elements.welcomeModal.classList.add("visible");
+  elements.welcomeModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeWelcome() {
+  elements.welcomeModal.classList.remove("visible");
+  elements.welcomeModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 
 function getProfileRank() {
@@ -789,7 +877,7 @@ async function finishAuthenticatedPlayer(user, playerData = null) {
   closeRegister();
   closeVerification();
   renderDashboard();
-  showToast(`Bienvenue ${state.player.firstname} ! Progression synchronisée.`, "success");
+  openWelcome();
 }
 
 async function initializeAccount() {
@@ -918,6 +1006,7 @@ document.addEventListener("keydown", (event) => {
     || elements.resultModal.classList.contains("visible")
     || elements.registerModal.classList.contains("visible")
     || elements.verifyModal.classList.contains("visible")
+    || elements.welcomeModal.classList.contains("visible")
     || elements.profileModal.classList.contains("visible")
     || elements.infoModal.classList.contains("visible")
   ) return;
@@ -970,7 +1059,6 @@ elements.registerForm.addEventListener("submit", async (event) => {
     if (authMode === "login") {
       const data = await signInAccount(identifier, password);
       await finishAuthenticatedPlayer(data.user);
-      startWorld(state.unlockedWorld);
       return;
     }
 
@@ -990,7 +1078,6 @@ elements.registerForm.addEventListener("submit", async (event) => {
       openVerification(email);
     } else if (data?.user) {
       await finishAuthenticatedPlayer(data.user, pendingRegistration);
-      startWorld(state.unlockedWorld);
     }
   } catch (error) {
     showToast(getFriendlyAuthError(error, authMode === "login" ? "login" : "signup"), "error");
@@ -1009,7 +1096,6 @@ elements.verifyForm.addEventListener("submit", async (event) => {
     pendingRegistration = null;
     elements.registerForm.reset();
     elements.verifyForm.reset();
-    startWorld(state.unlockedWorld);
   } catch (error) {
     showToast(getFriendlyAuthError(error, "verification"), "error");
   } finally {
@@ -1017,6 +1103,18 @@ elements.verifyForm.addEventListener("submit", async (event) => {
   }
 });
 $("#show-login").addEventListener("click", () => setAuthMode(authMode === "login" ? "register" : "login"));
+$("#welcome-action").addEventListener("click", () => {
+  const canResume = hasResumableSession();
+  closeWelcome();
+  if (canResume) {
+    resumeActiveSession();
+  } else if (state.completedWorlds.length === worlds.length) {
+    openProfile();
+  } else {
+    startWorld(state.unlockedWorld);
+  }
+});
+$("#welcome-dashboard").addEventListener("click", closeWelcome);
 $("#player-chip").addEventListener("click", () => openProfile());
 $("#close-profile").addEventListener("click", closeProfile);
 $("#profile-action").addEventListener("click", closeProfile);

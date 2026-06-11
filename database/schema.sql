@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS public.player_progress (
   unlocked_world INTEGER NOT NULL DEFAULT 0 CHECK (unlocked_world BETWEEN 0 AND 9),
   completed_worlds INTEGER[] NOT NULL DEFAULT '{}',
   profile_milestones INTEGER[] NOT NULL DEFAULT '{}',
+  active_session JSONB,
   last_played_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

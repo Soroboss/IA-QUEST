@@ -383,6 +383,32 @@ h1 em { color: var(--cyan); font-style: normal; }
 .otp-field { display: grid; gap: 9px; color: #b9c7d8; font-size: 11px; font-weight: 700; }
 .otp-field input { width: 100%; height: 62px; border: 1px solid var(--line); border-radius: 10px; background: #091d39; color: white; text-align: center; font: 700 25px "Space Grotesk"; letter-spacing: .35em; }
 .privacy-note { color: #667b95; font-size: 10px; margin: 13px 0 0; }
+.welcome-backdrop { z-index: 45; }
+.welcome-card { width: min(760px, 100%); border-color: rgba(24,217,218,.32); }
+.welcome-heading { display: flex; align-items: center; gap: 20px; }
+.welcome-heading h2 { max-width: 560px; line-height: 1.2; }
+.welcome-heading h2 span { color: var(--cyan); }
+.welcome-avatar {
+  width: 72px; height: 72px; flex: 0 0 72px; border-radius: 22px; display: grid; place-items: center;
+  color: #052036; background: linear-gradient(145deg, var(--cyan-light), #1c86c5);
+  font: 700 20px "Space Grotesk"; box-shadow: 0 15px 35px rgba(24,217,218,.18);
+}
+.welcome-intro { color: #b4c2d3; line-height: 1.7; margin: 22px 0; }
+.welcome-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.welcome-grid > div {
+  min-height: 112px; padding: 17px; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(255,255,255,.025);
+}
+.welcome-grid strong { display: block; color: var(--cyan); font: 700 20px "Space Grotesk"; margin-bottom: 10px; }
+.welcome-grid span { color: #c0ccda; font-size: 12px; line-height: 1.5; }
+.welcome-benefit, .resume-summary { padding: 17px 18px; border-radius: 12px; margin-top: 15px; }
+.welcome-benefit { border-left: 3px solid var(--yellow); background: rgba(255,220,93,.06); }
+.welcome-benefit > span, .resume-summary > span { color: var(--yellow); font-size: 9px; font-weight: 800; letter-spacing: .15em; }
+.welcome-benefit p, .resume-summary p { color: #b8c5d4; line-height: 1.55; margin: 7px 0 0; font-size: 12px; }
+.resume-summary { border: 1px solid rgba(24,217,218,.25); background: rgba(24,217,218,.07); }
+.resume-summary > span { color: var(--cyan); }
+.resume-summary strong { display: block; margin-top: 7px; font: 700 16px "Space Grotesk"; }
+.welcome-dashboard { display: block; margin: 7px auto 0; color: #8ea1b8; font-size: 12px; }
 .profile-card { text-align: center; border-color: rgba(24,217,218,.3); }
 .profile-avatar {
   width: 92px; height: 92px; border-radius: 28px; margin: 0 auto 22px; display: grid; place-items: center;
@@ -448,6 +474,10 @@ h1 em { color: var(--cyan); font-style: normal; }
   .lesson-card { padding: 26px 20px; }
   .lesson-top { align-items: flex-start; }
   .form-grid { grid-template-columns: 1fr; }
+  .welcome-heading { align-items: flex-start; }
+  .welcome-avatar { width: 58px; height: 58px; flex-basis: 58px; border-radius: 17px; }
+  .welcome-grid { grid-template-columns: 1fr; }
+  .welcome-grid > div { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
