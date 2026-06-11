@@ -435,6 +435,38 @@ h1 em { color: var(--cyan); font-style: normal; }
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 .toast.success { border-color: rgba(75,243,162,.5); }
 .toast.error { border-color: rgba(255,100,127,.5); }
+.game-fx {
+  position: fixed; inset: 0; z-index: 70; overflow: hidden; pointer-events: none;
+  display: grid; place-items: center;
+}
+.fx-symbol {
+  position: absolute; left: 50%; top: 48%; opacity: 0;
+  font-size: clamp(30px, 5vw, 58px);
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.35));
+  animation: fxBurst 1.2s ease-out forwards;
+  animation-delay: var(--delay, 0ms);
+}
+.fx-label {
+  padding: 12px 18px; border-radius: 999px; opacity: 0;
+  color: white; background: rgba(7,23,46,.94); border: 1px solid rgba(255,255,255,.18);
+  font: 800 13px "Space Grotesk"; letter-spacing: .08em;
+  box-shadow: var(--shadow); animation: fxLabel 1.35s ease forwards;
+}
+.game-fx.loss .fx-label { color: #ffd5dc; border-color: rgba(255,100,127,.5); }
+.game-fx.celebration .fx-label { color: #baffdf; border-color: rgba(75,243,162,.5); }
+@keyframes fxBurst {
+  0% { opacity: 0; transform: translate(-50%, -10%) scale(.45) rotate(0); }
+  20% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, -150px))) scale(1.15) rotate(var(--rotate, 12deg));
+  }
+}
+@keyframes fxLabel {
+  0% { opacity: 0; transform: translateY(20px) scale(.9); }
+  18%, 72% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-14px) scale(.96); }
+}
 
 @media (max-width: 950px) {
   .hero { grid-template-columns: 1fr; padding-top: 70px; }

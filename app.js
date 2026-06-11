@@ -330,6 +330,9 @@ let state = loadState();
 let authMode = "register";
 let pendingRegistration = null;
 let remoteSaveTimer = null;
+let audioContext = null;
+let masterGain = null;
+let lastTimerSound = null;
 let session = {
   worldIndex: 0,
   questionIndex: 0,
@@ -384,7 +387,8 @@ const elements = {
   welcomeModal: $("#welcome-modal"),
   profileModal: $("#profile-modal"),
   infoModal: $("#info-modal"),
-  toast: $("#toast")
+  toast: $("#toast"),
+  gameFx: $("#game-fx")
 };
 
 function loadState() {
@@ -488,6 +492,7 @@ function startWorld(worldIndex = state.unlockedWorld) {
     correctCount: 0, errors: [], reviewIndex: 0, timer: null, timeLeft: 20,
     questions: shuffleQuestions(worlds[worldIndex].questions)
   };
+  prepareAudio();
   persistActiveSession();
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
@@ -530,6 +535,7 @@ function renderQuestion() {
 function startTimer() {
   clearInterval(session.timer);
   session.timeLeft = 20;
+  lastTimerSound = null;
   updateTimer();
   session.timer = setInterval(() => {
     session.timeLeft -= 1;
@@ -545,6 +551,10 @@ function updateTimer() {
   elements.timerCount.textContent = session.timeLeft;
   elements.timerPill.classList.toggle("warning", session.timeLeft <= 10 && session.timeLeft > 5);
   elements.timerPill.classList.toggle("danger", session.timeLeft <= 5);
+  if (session.timeLeft <= 10 && session.timeLeft > 0 && lastTimerSound !== session.timeLeft) {
+    lastTimerSound = session.timeLeft;
+    playTimerPulse(session.timeLeft);
+  }
 }
 
 function answerQuestion(answerIndex, timedOut = false) {
@@ -570,7 +580,8 @@ function answerQuestion(answerIndex, timedOut = false) {
     state.xp += earnedXp;
     elements.sessionScore.textContent = session.score;
     elements.sessionStreak.textContent = session.streak;
-    playTone("correct");
+    playSound("correct");
+    showGameEffect("correct", session.streak >= 3 ? "Série brillante !" : "Bonne réponse !");
     showToast(`Bonne réponse · +${earnedXp} XP`, "success");
     saveState();
     renderDashboard();
@@ -585,7 +596,8 @@ function answerQuestion(answerIndex, timedOut = false) {
       selectedAnswer: answerIndex,
       timedOut
     });
-    playTone("wrong");
+    playSound(timedOut ? "timeout" : "wrong");
+    showGameEffect("loss", timedOut ? "⏰ Temps écoulé · −1 vie" : "💔 −1 vie");
     showToast(timedOut ? "Temps écoulé · réponse comptée comme incorrecte" : "Réponse incorrecte", "error");
     saveState();
     renderDashboard();
@@ -643,6 +655,11 @@ function showWorldResult({ recordAttempt = true } = {}) {
   const percentage = Math.round((session.correctCount / total) * 100);
   const passed = percentage >= 80;
   const timedOutCount = session.errors.filter((error) => error.timedOut).length;
+  playSound(passed ? "celebration" : "levelLoss");
+  showGameEffect(
+    passed ? "celebration" : "loss",
+    passed ? "🎉 Niveau réussi !" : "😢 Révision nécessaire"
+  );
 
   persistActiveSession({ status: "result", questionIndex: session.questions.length });
   if (recordAttempt) {
@@ -962,24 +979,82 @@ function showToast(message, type = "") {
   showToast.timer = setTimeout(() => elements.toast.classList.remove("visible"), 2600);
 }
 
-function playTone(type) {
-  if (!state.sound) return;
+function prepareAudio() {
+  if (!state.sound) return null;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.frequency.value = type === "correct" ? 660 : 190;
-    oscillator.type = type === "correct" ? "sine" : "triangle";
-    gain.gain.setValueAtTime(0.08, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.18);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.18);
+    if (!AudioContext) return null;
+    if (!audioContext) {
+      audioContext = new AudioContext();
+      masterGain = audioContext.createGain();
+      masterGain.gain.value = 0.32;
+      masterGain.connect(audioContext.destination);
+    }
+    if (audioContext.state === "suspended") audioContext.resume();
+    return audioContext;
   } catch {
-    // Audio feedback is optional.
+    return null;
   }
+}
+
+function scheduleNote(frequency, start, duration, volume = 0.08, type = "sine") {
+  const context = prepareAudio();
+  if (!context || !masterGain) return;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(masterGain);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.02);
+}
+
+function playTimerPulse(secondsLeft) {
+  const context = prepareAudio();
+  if (!context) return;
+  const urgent = secondsLeft <= 5;
+  scheduleNote(urgent ? 165 : 120, context.currentTime, urgent ? 0.11 : 0.07, urgent ? 0.045 : 0.025, "sine");
+  if (urgent) scheduleNote(220, context.currentTime + 0.08, 0.08, 0.025, "sine");
+}
+
+function playSound(type) {
+  const context = prepareAudio();
+  if (!context) return;
+  const now = context.currentTime;
+  const melodies = {
+    correct: [[523, 0, .12, .08], [659, .1, .14, .075], [784, .2, .18, .07]],
+    wrong: [[220, 0, .16, .07, "triangle"], [165, .13, .24, .065, "triangle"]],
+    timeout: [[260, 0, .1, .06, "square"], [195, .11, .1, .055, "square"], [130, .22, .28, .06, "triangle"]],
+    celebration: [[523, 0, .16, .08], [659, .12, .16, .08], [784, .24, .18, .085], [1047, .4, .42, .09]],
+    levelLoss: [[294, 0, .2, .06, "triangle"], [247, .17, .22, .06, "triangle"], [196, .36, .38, .065, "triangle"]]
+  };
+  (melodies[type] || melodies.correct).forEach(([frequency, delay, duration, volume, wave]) => {
+    scheduleNote(frequency, now + delay, duration, volume, wave || "sine");
+  });
+}
+
+function showGameEffect(type, label) {
+  const symbols = type === "celebration"
+    ? ["🎉", "✨", "🏆", "⭐", "🎊", "✨"]
+    : type === "correct"
+      ? ["✨", "⭐", "✓"]
+      : ["😢", "💔", "😔"];
+  elements.gameFx.className = `game-fx ${type}`;
+  elements.gameFx.innerHTML = `
+    <div class="fx-label">${label}</div>
+    ${symbols.map((symbol, index) => `
+      <span class="fx-symbol" style="--x:${(index - (symbols.length - 1) / 2) * 72}px;--y:${-105 - (index % 3) * 48}px;--rotate:${index % 2 ? 18 : -18}deg;--delay:${index * 45}ms">${symbol}</span>
+    `).join("")}
+  `;
+  clearTimeout(showGameEffect.timer);
+  showGameEffect.timer = setTimeout(() => {
+    elements.gameFx.className = "game-fx";
+    elements.gameFx.innerHTML = "";
+  }, 1500);
 }
 
 elements.worlds.addEventListener("click", (event) => {
@@ -1135,6 +1210,11 @@ $("#logout-player").addEventListener("click", async () => {
 });
 $("#sound-toggle").addEventListener("click", () => {
   state.sound = !state.sound;
+  if (masterGain) masterGain.gain.value = state.sound ? 0.32 : 0;
+  if (state.sound) {
+    prepareAudio();
+    playSound("correct");
+  }
   saveState();
   renderDashboard();
   showToast(state.sound ? "Sons activés" : "Sons désactivés");
