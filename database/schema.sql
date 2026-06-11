@@ -12,8 +12,24 @@ CREATE TABLE IF NOT EXISTS public.players (
 CREATE UNIQUE INDEX IF NOT EXISTS players_email_unique
   ON public.players (lower(email));
 
+CREATE UNIQUE INDEX IF NOT EXISTS players_whatsapp_unique
+  ON public.players (regexp_replace(whatsapp, '[^0-9+]', '', 'g'));
+
 CREATE INDEX IF NOT EXISTS players_created_at_idx
   ON public.players (created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.resolve_login_email(login_value TEXT)
+RETURNS TEXT AS $$
+  SELECT email
+  FROM public.players
+  WHERE regexp_replace(whatsapp, '[^0-9+]', '', 'g')
+    = regexp_replace(login_value, '[^0-9+]', '', 'g')
+  LIMIT 1;
+$$ LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public;
+
+REVOKE ALL ON FUNCTION public.resolve_login_email(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.resolve_login_email(TEXT) TO anon, authenticated;
 
 CREATE TABLE IF NOT EXISTS public.player_progress (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

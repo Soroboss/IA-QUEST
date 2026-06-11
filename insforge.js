@@ -41,8 +41,24 @@ export async function verifyAccount(email, otp) {
   return data;
 }
 
-export async function signInAccount(email, password) {
+export async function signInAccount(identifier, password) {
   const client = requireClient();
+  let email = identifier.trim().toLowerCase();
+
+  if (!email.includes("@")) {
+    const { data: resolvedEmail, error: resolveError } = await client.database.rpc(
+      "resolve_login_email",
+      { login_value: identifier }
+    );
+    if (resolveError) throw resolveError;
+    email = typeof resolvedEmail === "string"
+      ? resolvedEmail
+      : Array.isArray(resolvedEmail)
+        ? resolvedEmail[0]
+        : resolvedEmail?.resolve_login_email;
+    if (!email) throw new Error("Aucun compte ne correspond à ce numéro WhatsApp.");
+  }
+
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;

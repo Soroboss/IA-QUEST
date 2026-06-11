@@ -742,6 +742,16 @@ function setAuthMode(mode) {
   $("#register-consent").required = !isLogin;
   $("#register-consent").closest("label").hidden = isLogin;
   $(".privacy-note").hidden = isLogin;
+  $("#auth-eyebrow").textContent = isLogin ? "CONNEXION JOUEUR" : "CRÉER MON PROFIL";
+  $("#auth-intro").textContent = isLogin
+    ? "Entre ton adresse email ou ton numéro WhatsApp, puis ton mot de passe."
+    : "Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.";
+  $("#identifier-label").textContent = isLogin ? "Email ou numéro WhatsApp" : "Adresse email";
+  $("#register-email").type = isLogin ? "text" : "email";
+  $("#register-email").placeholder = isLogin ? "Email ou WhatsApp" : "nom@exemple.com";
+  $("#register-email").autocomplete = isLogin ? "username" : "email";
+  $("#identifier-field").classList.toggle("full-field", isLogin);
+  $("#register-password").closest("label").classList.toggle("full-field", true);
   $("#register-password").autocomplete = isLogin ? "current-password" : "new-password";
   $("#register-title").textContent = isLogin ? "Reprendre mon aventure" : "Bienvenue dans IA Quest";
   $("#register-submit").innerHTML = isLogin
@@ -952,11 +962,12 @@ elements.registerForm.addEventListener("submit", async (event) => {
   if (!elements.registerForm.reportValidity()) return;
   const submitButton = $("#register-submit");
   submitButton.disabled = true;
-  const email = $("#register-email").value.trim().toLowerCase();
+  const identifier = $("#register-email").value.trim();
+  const email = identifier.toLowerCase();
   const password = $("#register-password").value;
   try {
     if (authMode === "login") {
-      const data = await signInAccount(email, password);
+      const data = await signInAccount(identifier, password);
       await finishAuthenticatedPlayer(data.user);
       startWorld(state.unlockedWorld);
       return;

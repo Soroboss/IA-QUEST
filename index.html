@@ -193,15 +193,15 @@
 
   <div class="modal-backdrop" id="register-modal" aria-hidden="true">
     <article class="lesson-card register-card" role="dialog" aria-modal="true" aria-labelledby="register-title">
-      <span class="eyebrow"><span></span> CRÉER MON PROFIL</span>
+      <span class="eyebrow"><span></span> <b id="auth-eyebrow">CRÉER MON PROFIL</b></span>
       <h2 id="register-title">Bienvenue dans IA Quest</h2>
-      <p class="lesson-intro">Présente-toi avant de commencer. Ta progression sera enregistrée sur cet appareil.</p>
+      <p class="lesson-intro" id="auth-intro">Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.</p>
       <form id="register-form">
         <div class="form-grid">
           <label><span>Prénom</span><input id="register-firstname" name="firstname" type="text" autocomplete="given-name" required minlength="2" placeholder="Ex. Aïcha"></label>
           <label><span>Nom</span><input id="register-lastname" name="lastname" type="text" autocomplete="family-name" required minlength="2" placeholder="Ex. Koné"></label>
           <label><span>Numéro WhatsApp</span><input id="register-phone" name="phone" type="tel" autocomplete="tel" required pattern="[+0-9 ()-]{8,20}" placeholder="Ex. +225 07 00 00 00 00"></label>
-          <label><span>Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="nom@exemple.com"></label>
+          <label id="identifier-field"><span id="identifier-label">Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="nom@exemple.com"></label>
           <label class="full-field"><span>Mot de passe</span><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="6 caractères minimum"></label>
         </div>
         <label class="consent-field"><input id="register-consent" type="checkbox" required><span>J’accepte que mes coordonnées et ma progression soient enregistrées pour le fonctionnement du jeu.</span></label>
