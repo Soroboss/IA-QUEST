@@ -1,6 +1,7 @@
 import {
   backendConfigured,
   createRemotePlayer,
+  getFriendlyAuthError,
   getCurrentAccount,
   loadRemotePlayer,
   saveRemoteProgress,
@@ -794,7 +795,7 @@ async function finishAuthenticatedPlayer(user, playerData = null) {
 async function initializeAccount() {
   renderDashboard();
   if (!backendConfigured) {
-    showToast("InsForge n’est pas configuré sur cet environnement.", "error");
+    showToast("Le service de connexion est momentanément indisponible.", "error");
     return;
   }
   try {
@@ -992,7 +993,7 @@ elements.registerForm.addEventListener("submit", async (event) => {
       startWorld(state.unlockedWorld);
     }
   } catch (error) {
-    showToast(error.message || "Impossible de créer le compte.", "error");
+    showToast(getFriendlyAuthError(error, authMode === "login" ? "login" : "signup"), "error");
   } finally {
     submitButton.disabled = false;
   }
@@ -1010,7 +1011,7 @@ elements.verifyForm.addEventListener("submit", async (event) => {
     elements.verifyForm.reset();
     startWorld(state.unlockedWorld);
   } catch (error) {
-    showToast(error.message || "Code invalide ou expiré.", "error");
+    showToast(getFriendlyAuthError(error, "verification"), "error");
   } finally {
     button.disabled = false;
   }
@@ -1023,7 +1024,7 @@ $("#logout-player").addEventListener("click", async () => {
   try {
     await signOutAccount();
   } catch {
-    showToast("La session distante n’a pas pu être fermée.", "error");
+    showToast("La déconnexion n’a pas abouti. Réessaie dans quelques instants.", "error");
   }
   const soundPreference = state.sound;
   state = { ...defaultState, sound: soundPreference };

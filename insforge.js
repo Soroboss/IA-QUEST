@@ -13,7 +13,7 @@ export const insforge = backendConfigured
 
 function requireClient() {
   if (!insforge) {
-    throw new Error("La connexion à InsForge n’est pas configurée.");
+    throw new Error("SERVICE_UNAVAILABLE");
   }
   return insforge;
 }
@@ -64,6 +64,38 @@ export async function signInAccount(identifier, password) {
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
+}
+
+export function getFriendlyAuthError(error, context = "account") {
+  const code = String(error?.error || error?.code || "").toUpperCase();
+  const status = Number(error?.statusCode || error?.status || 0);
+  const message = String(error?.message || "").toLowerCase();
+
+  if (code.includes("INVALID_CREDENTIALS") || status === 401 || message.includes("invalid login")) {
+    return "Email, numéro WhatsApp ou mot de passe incorrect.";
+  }
+  if (status === 403 || code.includes("EMAIL_NOT_VERIFIED") || message.includes("not verified")) {
+    return "Ton adresse email doit être vérifiée avant la connexion.";
+  }
+  if (code.includes("USER_ALREADY_EXISTS") || status === 409 || message.includes("already")) {
+    return "Un compte existe déjà avec cette adresse email.";
+  }
+  if (code.includes("RATE") || status === 429) {
+    return "Trop de tentatives. Patiente quelques minutes avant de réessayer.";
+  }
+  if (code.includes("OTP") || message.includes("code") || context === "verification") {
+    return "Le code est invalide ou a expiré. Demande un nouveau code.";
+  }
+  if (message.includes("aucun compte")) {
+    return error.message;
+  }
+  if (context === "signup") {
+    return "Impossible de créer le compte pour le moment. Réessaie dans quelques instants.";
+  }
+  if (context === "login") {
+    return "Connexion momentanément indisponible. Réessaie dans quelques instants.";
+  }
+  return "Une erreur est survenue. Réessaie dans quelques instants.";
 }
 
 export async function signOutAccount() {
