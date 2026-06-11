@@ -65,6 +65,15 @@
           </button>
           <button class="text-button" id="how-button">Comment jouer ?</button>
         </div>
+        <button class="next-mission" id="next-mission" type="button">
+          <div class="next-mission-icon" id="next-mission-icon">⌁</div>
+          <div>
+            <span>TA PROCHAINE MISSION</span>
+            <strong id="next-mission-title">Les fondations</strong>
+            <p id="next-mission-text">5 questions · objectif 80 % · bonus +50 XP</p>
+          </div>
+          <span class="next-mission-arrow" aria-hidden="true">→</span>
+        </button>
         <div class="daily-row">
           <div class="avatars" aria-hidden="true">
             <span>AK</span><span>LM</span><span>JO</span>
@@ -151,6 +160,14 @@
           </div>
           <p class="guide-name">NOVA · TON GUIDE</p>
           <blockquote id="guide-message">Observe bien les indices. Tu as tout ce qu’il faut pour réussir.</blockquote>
+          <div class="mission-goal">
+            <div class="goal-heading">
+              <span>OBJECTIF DU NIVEAU</span>
+              <strong id="goal-status">0 / 4</strong>
+            </div>
+            <div class="goal-progress"><span id="goal-progress-bar"></span></div>
+            <p id="goal-message">Encore 4 bonnes réponses pour réussir</p>
+          </div>
           <div class="session-stats">
             <div><span>Score</span><strong id="session-score">0</strong></div>
             <div><span>Série</span><strong id="session-streak">0</strong></div>
@@ -188,6 +205,18 @@
       <span class="eyebrow result-eyebrow" id="result-eyebrow">NIVEAU RÉUSSI</span>
       <h2 id="result-title">Excellent travail !</h2>
       <p class="lesson-intro" id="result-message"></p>
+      <div class="result-reward" id="result-reward">
+        <span id="result-reward-icon">⚡</span>
+        <div>
+          <small id="result-reward-label">RÉCOMPENSE</small>
+          <strong id="result-reward-text">+50 XP et un nouveau monde</strong>
+        </div>
+      </div>
+      <div class="next-world-preview" id="next-world-preview" hidden>
+        <span>PROCHAIN DÉFI</span>
+        <strong id="next-world-title">Monde 2 · Données & apprentissage</strong>
+        <p id="next-world-description"></p>
+      </div>
       <div class="result-details">
         <div><span>Bonnes réponses</span><strong id="result-correct">4 / 5</strong></div>
         <div><span>Seuil requis</span><strong>80 %</strong></div>

@@ -367,6 +367,9 @@ const elements = {
   answers: $("#answers-list"),
   sessionScore: $("#session-score"),
   sessionStreak: $("#session-streak"),
+  goalStatus: $("#goal-status"),
+  goalProgress: $("#goal-progress-bar"),
+  goalMessage: $("#goal-message"),
   guide: $("#guide-message"),
   lessonModal: $("#lesson-modal"),
   lessonIntro: $("#lesson-intro"),
@@ -380,6 +383,12 @@ const elements = {
   resultMessage: $("#result-message"),
   resultCorrect: $("#result-correct"),
   resultAction: $("#result-action"),
+  resultRewardIcon: $("#result-reward-icon"),
+  resultRewardLabel: $("#result-reward-label"),
+  resultRewardText: $("#result-reward-text"),
+  nextWorldPreview: $("#next-world-preview"),
+  nextWorldTitle: $("#next-world-title"),
+  nextWorldDescription: $("#next-world-description"),
   registerModal: $("#register-modal"),
   registerForm: $("#register-form"),
   verifyModal: $("#verify-modal"),
@@ -458,6 +467,19 @@ function renderDashboard() {
   $("#start-button").childNodes[0].textContent = state.player
     ? (state.completedWorlds.length === worlds.length ? "Voir mon profil final " : "Continuer l’aventure ")
     : "Commencer l’aventure ";
+  const missionIndex = hasResumableSession() ? state.activeSession.worldIndex : state.unlockedWorld;
+  const missionWorld = worlds[Math.min(missionIndex, worlds.length - 1)];
+  $("#next-mission-icon").textContent = missionWorld.icon;
+  $("#next-mission-title").textContent = hasResumableSession()
+    ? `Reprendre · ${missionWorld.title}`
+    : state.completedWorlds.length === worlds.length
+      ? "Ton profil IA est terminé"
+      : `Monde ${missionIndex + 1} · ${missionWorld.title}`;
+  $("#next-mission-text").textContent = hasResumableSession()
+    ? `Question ${Math.min(state.activeSession.questionIndex + 1, state.activeSession.questions.length)} sur ${state.activeSession.questions.length} · progression sauvegardée`
+    : state.completedWorlds.length === worlds.length
+      ? "Découvre ton niveau final et ton parcours accompli"
+      : "5 questions · objectif 80 % · bonus +50 XP";
 
   elements.worlds.innerHTML = chapterWorlds.map((world, localIndex) => {
     const index = chapterStart + localIndex;
@@ -520,9 +542,15 @@ function renderQuestion() {
   elements.question.textContent = question.question;
   elements.sessionScore.textContent = session.score;
   elements.sessionStreak.textContent = session.streak;
-  elements.guide.textContent = session.streak >= 2
-      ? "Belle série ! La difficulté monte doucement avec toi."
-      : "Tu as 20 secondes. Lis bien chaque proposition avant de choisir.";
+  updateMissionGoal();
+  const remaining = Math.max(0, 4 - session.correctCount);
+  elements.guide.textContent = session.streak >= 3
+      ? "Impressionnant ! Une réponse de plus peut consolider ta victoire."
+      : session.streak >= 2
+        ? "Belle série ! Garde ce rythme, tu te rapproches rapidement des 80 %."
+        : remaining <= 2
+          ? `Plus que ${remaining} bonne${remaining > 1 ? "s" : ""} réponse${remaining > 1 ? "s" : ""} pour atteindre l’objectif.`
+          : "Tu as 20 secondes. Commence par éliminer les réponses les moins logiques.";
 
   elements.answers.innerHTML = question.answers.map((answer, index) => `
     <button class="answer-button" data-answer="${index}">
@@ -530,6 +558,16 @@ function renderQuestion() {
       <span>${answer}</span>
     </button>
   `).join("");
+}
+
+function updateMissionGoal() {
+  const target = Math.ceil(session.questions.length * 0.8);
+  const remaining = Math.max(0, target - session.correctCount);
+  elements.goalStatus.textContent = `${session.correctCount} / ${target}`;
+  elements.goalProgress.style.width = `${Math.min(100, (session.correctCount / target) * 100)}%`;
+  elements.goalMessage.textContent = remaining === 0
+    ? "Objectif atteint ! Termine le niveau pour valider."
+    : `Encore ${remaining} bonne${remaining > 1 ? "s" : ""} réponse${remaining > 1 ? "s" : ""} pour réussir`;
 }
 
 function startTimer() {
@@ -580,6 +618,7 @@ function answerQuestion(answerIndex, timedOut = false) {
     state.xp += earnedXp;
     elements.sessionScore.textContent = session.score;
     elements.sessionStreak.textContent = session.streak;
+    updateMissionGoal();
     playSound("correct");
     showGameEffect("correct", session.streak >= 3 ? "Série brillante !" : "Bonne réponse !");
     showToast(`Bonne réponse · +${earnedXp} XP`, "success");
@@ -683,15 +722,30 @@ function showWorldResult({ recordAttempt = true } = {}) {
   elements.resultMessage.textContent = passed
     ? "Tu as atteint le seuil de 80 %. Le monde suivant est maintenant accessible."
     : `Il faut au moins 80 % pour avancer. Lis les ${session.errors.length} cours liés à tes erreurs, puis reprends ce niveau.`;
+  elements.resultRewardIcon.textContent = passed ? "⚡" : "📘";
+  elements.resultRewardLabel.textContent = passed ? "RÉCOMPENSE OBTENUE" : "TA PROCHAINE FORCE";
+  elements.resultRewardText.textContent = passed
+    ? "+50 XP et accès au prochain monde"
+    : `${session.errors.length} cours personnalisés pour réussir la prochaine tentative`;
+  const nextWorld = worlds[session.worldIndex + 1];
+  elements.nextWorldPreview.hidden = !passed || !nextWorld;
+  if (passed && nextWorld) {
+    elements.nextWorldTitle.textContent = `Monde ${session.worldIndex + 2} · ${nextWorld.title}`;
+    elements.nextWorldDescription.textContent = nextWorld.subtitle;
+  }
   elements.resultAction.innerHTML = passed
-    ? `Continuer vers le monde suivant <span>→</span>`
+    ? session.worldIndex === 9
+      ? `Découvrir mon profil final <span>→</span>`
+      : session.worldIndex === 4
+        ? `Découvrir le parcours expert <span>→</span>`
+        : `Jouer le monde suivant <span>→</span>`
     : `Commencer les cours de révision <span>→</span>`;
   elements.resultAction.dataset.passed = String(passed);
   elements.resultModal.classList.add("visible");
   elements.resultModal.setAttribute("aria-hidden", "false");
 }
 
-function completeWorld() {
+function completeWorld(continuePlaying = false) {
   const worldIndex = session.worldIndex;
   if (!state.completedWorlds.includes(worldIndex)) {
     state.completedWorlds.push(worldIndex);
@@ -709,6 +763,11 @@ function completeWorld() {
       saveState();
     }
     openProfile(true);
+    return;
+  }
+  if (continuePlaying && worldIndex < worlds.length - 1) {
+    showToast(`Monde ${worldIndex + 2} débloqué · nouveau défi !`, "success");
+    setTimeout(() => startWorld(worldIndex + 1), 350);
     return;
   }
   const nextLabel = worldIndex < worlds.length - 1 ? ` · Monde ${state.unlockedWorld + 1} débloqué` : "";
@@ -1108,10 +1167,21 @@ elements.resultAction.addEventListener("click", () => {
   const passed = elements.resultAction.dataset.passed === "true";
   closeResult();
   if (passed) {
-    completeWorld();
+    completeWorld(true);
   } else {
     session.reviewIndex = 0;
     showLesson(session.errors[0]);
+  }
+});
+$("#next-mission").addEventListener("click", () => {
+  if (!state.player) {
+    openRegister();
+  } else if (hasResumableSession()) {
+    resumeActiveSession();
+  } else if (state.completedWorlds.length === worlds.length) {
+    openProfile();
+  } else {
+    startWorld(state.unlockedWorld);
   }
 });
 $("#how-button").addEventListener("click", () => {

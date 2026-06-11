@@ -173,6 +173,21 @@ h1 em { color: var(--cyan); font-style: normal; }
 .primary-button span { margin-left: 18px; }
 .text-button { border: 0; background: transparent; cursor: pointer; color: #c9d4e3; padding: 12px 0; }
 .text-button:hover { color: var(--cyan); }
+.next-mission {
+  width: min(570px, 100%); margin-top: 24px; padding: 14px 16px; display: grid;
+  grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px; border: 1px solid rgba(24,217,218,.22);
+  border-radius: 13px; background: rgba(24,217,218,.055); color: var(--ink); text-align: left;
+  cursor: pointer; transition: .22s ease;
+}
+.next-mission:hover { transform: translateY(-2px); border-color: rgba(24,217,218,.5); background: rgba(24,217,218,.09); }
+.next-mission-icon {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+  color: var(--cyan); background: rgba(24,217,218,.11); font-size: 20px;
+}
+.next-mission span { color: var(--cyan); font-size: 8px; font-weight: 800; letter-spacing: .16em; }
+.next-mission strong { display: block; margin-top: 3px; font: 700 15px "Space Grotesk"; }
+.next-mission p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+.next-mission-arrow { font-size: 20px !important; }
 
 .daily-row { margin-top: 50px; display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; }
 .daily-row p { margin: 0; }
@@ -325,6 +340,13 @@ h1 em { color: var(--cyan); font-style: normal; }
 .mini-bot-face i:last-child { right: 15px; }
 .guide-name { color: var(--cyan); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
 .mission-panel blockquote { margin: 18px 0 28px; color: #aebdd0; font-size: 14px; line-height: 1.7; }
+.mission-goal { margin: 0 0 20px; padding: 15px; border-radius: 12px; background: rgba(24,217,218,.055); text-align: left; }
+.goal-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.goal-heading span { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.goal-heading strong { color: var(--cyan); font: 700 14px "Space Grotesk"; }
+.goal-progress { height: 6px; margin-top: 10px; border-radius: 20px; overflow: hidden; background: #122b4c; }
+.goal-progress span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .35s ease; }
+.mission-goal p { margin: 8px 0 0; color: #93a6bc; font-size: 9px; line-height: 1.4; }
 .session-stats { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); padding-top: 18px; }
 .session-stats div:first-child { border-right: 1px solid var(--line); }
 .session-stats span { color: var(--muted); font-size: 10px; display: block; }
@@ -363,6 +385,19 @@ h1 em { color: var(--cyan); font-style: normal; }
 .result-card.failed .result-score { border-color: var(--red); color: var(--red); background: rgba(255,100,127,.07); }
 .result-eyebrow { display: block; text-align: center; }
 .result-card.failed .result-eyebrow { color: var(--red); }
+.result-reward, .next-world-preview {
+  margin-top: 16px; padding: 15px 17px; border-radius: 12px; text-align: left;
+  border: 1px solid rgba(255,220,93,.22); background: rgba(255,220,93,.06);
+}
+.result-reward { display: flex; align-items: center; gap: 13px; }
+.result-reward > span { font-size: 25px; }
+.result-reward small, .next-world-preview > span { display: block; color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .15em; }
+.result-reward strong, .next-world-preview strong { display: block; margin-top: 4px; font: 700 14px "Space Grotesk"; }
+.result-card.failed .result-reward { border-color: rgba(24,217,218,.2); background: rgba(24,217,218,.05); }
+.result-card.failed .result-reward small { color: var(--cyan); }
+.next-world-preview { border-color: rgba(24,217,218,.24); background: rgba(24,217,218,.055); }
+.next-world-preview > span { color: var(--cyan); }
+.next-world-preview p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
 .result-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
 .result-details > div { padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.025); }
 .result-details span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
@@ -492,6 +527,7 @@ h1 em { color: var(--cyan); font-style: normal; }
   h1 { font-size: 47px; }
   .hero-copy > p { font-size: 15px; }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 8px; }
+  .next-mission { grid-template-columns: 40px 1fr auto; }
   .hero-visual { height: 390px; transform: scale(.88); margin: -20px -30px; }
   .daily-row { margin-top: 30px; }
   .section-heading { align-items: flex-start; flex-direction: column; }
