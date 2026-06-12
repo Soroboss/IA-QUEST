@@ -313,6 +313,87 @@ worlds.push(
   }
 );
 
+const missionModes = [
+  {
+    key: "scanner",
+    title: "SCAN DE SIGNAL",
+    icon: "⌁",
+    brief: "Identifie le signal qui correspond réellement au fonctionnement d’un système d’IA.",
+    optionLabel: "SIGNAL"
+  },
+  {
+    key: "decision",
+    title: "DÉCISION CRITIQUE",
+    icon: "◇",
+    brief: "Tu pilotes le projet. Choisis l’action la plus rigoureuse avant la fin du temps.",
+    optionLabel: "ACTION"
+  },
+  {
+    key: "anomaly",
+    title: "CHASSE À L’ERREUR",
+    icon: "◎",
+    brief: "Élimine les trois faux signaux sans supprimer l’affirmation techniquement juste.",
+    optionLabel: "TOUCHER POUR ÉLIMINER"
+  },
+  {
+    key: "incident",
+    title: "INCIDENT IA",
+    icon: "⬡",
+    brief: "Analyse un incident réaliste et sélectionne la mesure qui limite vraiment le risque.",
+    optionLabel: "PROTOCOLE"
+  },
+  {
+    key: "architect",
+    title: "LABORATOIRE IA",
+    icon: "△",
+    brief: "Construis une solution fiable en choisissant le principe technique le plus adapté.",
+    optionLabel: "MODULE"
+  }
+];
+
+const knowledgeSources = [
+  {
+    name: "Google - Lexique du machine learning",
+    url: "https://developers.google.com/machine-learning/glossary"
+  },
+  {
+    name: "Google - Généralisation et surapprentissage",
+    url: "https://developers.google.com/machine-learning/crash-course/overfitting/overfitting"
+  },
+  {
+    name: "NIST - Cadre de gestion des risques IA",
+    url: "https://www.nist.gov/itl/ai-risk-management-framework"
+  },
+  {
+    name: "UNESCO - Recommandation sur l’éthique de l’IA",
+    url: "https://www.unesco.org/fr/artificial-intelligence/recommendation-ethics"
+  },
+  {
+    name: "NIST - Profil de risque pour l’IA générative",
+    url: "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence"
+  },
+  {
+    name: "Google - Précision, rappel et métriques",
+    url: "https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall"
+  },
+  {
+    name: "Google - Représentations vectorielles",
+    url: "https://developers.google.com/machine-learning/crash-course/embeddings"
+  },
+  {
+    name: "NIST - Évaluation de l’IA générative",
+    url: "https://www.nist.gov/itl/ai-risk-management-framework"
+  },
+  {
+    name: "OWASP - Risque d’injection de prompt",
+    url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
+  },
+  {
+    name: "NIST - Concevoir une IA digne de confiance",
+    url: "https://www.nist.gov/itl/ai-risk-management-framework"
+  }
+];
+
 const defaultState = {
   xp: 0,
   lives: 3,
@@ -362,9 +443,22 @@ const elements = {
   timerPill: $("#timer-pill"),
   timerCount: $("#timer-count"),
   difficulty: $("#difficulty-label"),
+  missionType: $("#mission-type"),
+  missionBrief: $("#mission-brief"),
+  missionBriefIcon: $("#mission-brief-icon"),
+  missionBriefLabel: $("#mission-brief-label"),
+  missionBriefText: $("#mission-brief-text"),
   topic: $("#question-topic"),
   question: $("#question-text"),
   answers: $("#answers-list"),
+  questionFeedback: $("#question-feedback"),
+  feedbackIcon: $("#feedback-icon"),
+  feedbackLabel: $("#feedback-label"),
+  feedbackTitle: $("#feedback-title"),
+  feedbackExplanation: $("#feedback-explanation"),
+  feedbackSource: $("#feedback-source"),
+  feedbackSourceName: $("#feedback-source-name"),
+  feedbackContinue: $("#feedback-continue"),
   sessionScore: $("#session-score"),
   sessionStreak: $("#session-streak"),
   goalStatus: $("#goal-status"),
@@ -476,10 +570,10 @@ function renderDashboard() {
       ? "Ton profil IA est terminé"
       : `Monde ${missionIndex + 1} · ${missionWorld.title}`;
   $("#next-mission-text").textContent = hasResumableSession()
-    ? `Question ${Math.min(state.activeSession.questionIndex + 1, state.activeSession.questions.length)} sur ${state.activeSession.questions.length} · progression sauvegardée`
+    ? `Mission ${Math.min(state.activeSession.questionIndex + 1, state.activeSession.questions.length)} sur ${state.activeSession.questions.length} · progression sauvegardée`
     : state.completedWorlds.length === worlds.length
       ? "Découvre ton niveau final et ton parcours accompli"
-      : "5 questions · objectif 80 % · bonus +50 XP";
+      : "5 missions · objectif 80 % · bonus +50 XP";
 
   elements.worlds.innerHTML = chapterWorlds.map((world, localIndex) => {
     const index = chapterStart + localIndex;
@@ -511,7 +605,7 @@ function startWorld(worldIndex = state.unlockedWorld) {
   }
   session = {
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
-    correctCount: 0, errors: [], reviewIndex: 0, timer: null, timeLeft: 20,
+    correctCount: 0, errors: [], eliminatedAnswers: {}, reviewIndex: 0, timer: null, timeLeft: 20,
     questions: shuffleQuestions(worlds[worldIndex].questions)
   };
   unlockAudio();
@@ -529,6 +623,7 @@ function currentQuestion() {
 function renderQuestion() {
   const world = worlds[session.worldIndex];
   const question = currentQuestion();
+  const missionMode = getMissionMode();
   const displayIndex = session.questionIndex + 1;
   session.answered = false;
   persistActiveSession();
@@ -538,6 +633,11 @@ function renderQuestion() {
   elements.progressBar.style.width = `${(session.questionIndex / session.questions.length) * 100}%`;
   elements.questionCounter.textContent = `${displayIndex} / ${session.questions.length}`;
   elements.difficulty.textContent = ["NIVEAU DÉCOUVERTE", "NIVEAU EXPLORATEUR", "NIVEAU EXPERT"][question.difficulty - 1];
+  elements.missionType.textContent = `MISSION · ${missionMode.title}`;
+  elements.missionBrief.className = `mission-brief ${missionMode.key}`;
+  elements.missionBriefIcon.textContent = missionMode.icon;
+  elements.missionBriefLabel.textContent = `DOSSIER ${String(session.worldIndex + 1).padStart(2, "0")} · ${world.title.toUpperCase()}`;
+  elements.missionBriefText.textContent = missionMode.brief;
   elements.topic.textContent = world.title.toUpperCase();
   elements.question.textContent = question.question;
   elements.sessionScore.textContent = session.score;
@@ -552,12 +652,35 @@ function renderQuestion() {
           ? `Plus que ${remaining} bonne${remaining > 1 ? "s" : ""} réponse${remaining > 1 ? "s" : ""} pour atteindre l’objectif.`
           : "Tu as 20 secondes. Commence par éliminer les réponses les moins logiques.";
 
+  elements.questionFeedback.hidden = true;
+  elements.answers.hidden = false;
+  elements.answers.className = `answers mode-${missionMode.key}`;
   elements.answers.innerHTML = question.answers.map((answer, index) => `
-    <button class="answer-button" data-answer="${index}">
-      <span class="answer-key">${index + 1}</span>
-      <span>${answer}</span>
+    <button class="answer-button ${session.eliminatedAnswers?.[session.questionIndex]?.includes(index) ? "eliminated" : ""}"
+      data-answer="${index}" ${session.eliminatedAnswers?.[session.questionIndex]?.includes(index) ? "disabled" : ""}>
+      <span class="answer-key">${String.fromCharCode(65 + index)}</span>
+      <span class="answer-content"><small>${missionMode.optionLabel} ${String.fromCharCode(65 + index)}</small>${answer}</span>
     </button>
   `).join("");
+  updateEliminationBrief();
+}
+
+function getMissionMode() {
+  return missionModes[(session.questionIndex + session.worldIndex) % missionModes.length];
+}
+
+function getKnowledgeSource(worldIndex = session.worldIndex) {
+  return knowledgeSources[worldIndex] || knowledgeSources[0];
+}
+
+function updateEliminationBrief() {
+  const missionMode = getMissionMode();
+  if (missionMode.key !== "anomaly") return;
+  const eliminated = session.eliminatedAnswers?.[session.questionIndex]?.length || 0;
+  const remaining = 3 - eliminated;
+  elements.missionBriefText.textContent = remaining > 0
+    ? `Élimine encore ${remaining} faux signal${remaining > 1 ? "aux" : ""}. Attention : le bon signal ne doit pas être supprimé.`
+    : "Tous les faux signaux ont été neutralisés.";
 }
 
 function updateMissionGoal() {
@@ -597,17 +720,17 @@ function updateTimer() {
   }
 }
 
-function answerQuestion(answerIndex, timedOut = false) {
+function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
   if (session.answered) return;
   session.answered = true;
   clearInterval(session.timer);
   const question = currentQuestion();
   const buttons = [...elements.answers.querySelectorAll(".answer-button")];
-  const isCorrect = answerIndex === question.correct;
+  const isCorrect = !forceIncorrect && answerIndex === question.correct;
 
   buttons.forEach((button, index) => {
     button.disabled = true;
-    if (index === question.correct) button.classList.add("correct");
+    if (index === question.correct && !(forceIncorrect && index === answerIndex)) button.classList.add("correct");
     if (index === answerIndex && !isCorrect) button.classList.add("wrong");
   });
 
@@ -623,10 +746,9 @@ function answerQuestion(answerIndex, timedOut = false) {
     updateMissionGoal();
     playSound("correct");
     showGameEffect("correct", session.streak >= 3 ? "Série brillante !" : "Bonne réponse !");
-    showToast(`Bonne réponse · +${earnedXp} XP`, "success");
+    showToast(`Mission validée · +${earnedXp} XP`, "success");
     saveState();
     renderDashboard();
-    setTimeout(nextQuestion, 850);
   } else {
     session.streak = 0;
     state.streak = 0;
@@ -639,15 +761,64 @@ function answerQuestion(answerIndex, timedOut = false) {
     });
     playSound(timedOut ? "timeout" : "wrong");
     showGameEffect("loss", timedOut ? "⏰ Temps écoulé · −1 vie" : "💔 −1 vie");
-    showToast(timedOut ? "Temps écoulé · réponse comptée comme incorrecte" : "Réponse incorrecte", "error");
+    showToast(timedOut ? "Temps écoulé · analyse à revoir" : "Décision risquée · analyse le débrief", "error");
     saveState();
     renderDashboard();
-    setTimeout(nextQuestion, 900);
   }
-  const nextIndex = session.questionIndex + 1;
-  if (nextIndex < session.questions.length) {
-    persistActiveSession({ questionIndex: nextIndex, answered: false, timeLeft: 20 });
+  showQuestionFeedback(isCorrect, timedOut, forceIncorrect);
+  persistActiveSession({
+    status: "feedback",
+    answered: true,
+    lastFeedback: { isCorrect, timedOut, forceIncorrect }
+  });
+}
+
+function eliminateAnswer(answerIndex) {
+  if (session.answered) return;
+  const question = currentQuestion();
+  if (answerIndex === question.correct) {
+    answerQuestion(answerIndex, false, true);
+    return;
   }
+  session.eliminatedAnswers ||= {};
+  const eliminated = session.eliminatedAnswers[session.questionIndex] || [];
+  if (eliminated.includes(answerIndex)) return;
+  eliminated.push(answerIndex);
+  session.eliminatedAnswers[session.questionIndex] = eliminated;
+  const button = elements.answers.querySelector(`[data-answer="${answerIndex}"]`);
+  button.disabled = true;
+  button.classList.add("eliminated");
+  playSound("eliminate");
+  showToast(`Faux signal neutralisé · ${eliminated.length} / 3`, "success");
+  updateEliminationBrief();
+  persistActiveSession();
+  if (eliminated.length === 3) {
+    setTimeout(() => answerQuestion(question.correct), 350);
+  }
+}
+
+function showQuestionFeedback(isCorrect, timedOut, forceIncorrect = false) {
+  const question = currentQuestion();
+  const source = getKnowledgeSource();
+  elements.answers.hidden = false;
+  elements.questionFeedback.hidden = false;
+  elements.questionFeedback.classList.toggle("incorrect", !isCorrect);
+  elements.feedbackIcon.textContent = isCorrect ? "✓" : timedOut ? "◷" : "!";
+  elements.feedbackLabel.textContent = isCorrect ? "ANALYSE VALIDÉE" : "DÉBRIEF DE MISSION";
+  elements.feedbackTitle.textContent = isCorrect
+    ? "Décision techniquement solide"
+    : forceIncorrect
+      ? "Tu as éliminé le signal fiable"
+      : timedOut
+        ? "Le temps a expiré"
+        : "Cette option pouvait induire en erreur";
+  elements.feedbackExplanation.textContent = question.lesson;
+  elements.feedbackSource.href = source.url;
+  elements.feedbackSourceName.textContent = source.name;
+  elements.feedbackContinue.innerHTML = session.questionIndex === session.questions.length - 1
+    ? `Voir le rapport de mission <span>→</span>`
+    : `Mission suivante <span>→</span>`;
+  elements.questionFeedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function showLesson(error) {
@@ -657,6 +828,9 @@ function showLesson(error) {
     : `Tu dois lire ce cours lié à l’une de tes erreurs avant de reprendre le niveau.`;
   elements.lessonText.textContent = question.lesson;
   elements.lessonExample.textContent = question.example;
+  const source = getKnowledgeSource();
+  $("#lesson-source").href = source.url;
+  $("#lesson-source-name").textContent = source.name;
   $("#lesson-title").textContent = `Cours ${session.reviewIndex + 1} sur ${session.errors.length}`;
   $("#continue-lesson").innerHTML = session.reviewIndex === session.errors.length - 1
     ? `J’ai tout compris, reprendre le niveau <span>→</span>`
@@ -835,6 +1009,8 @@ function resumeActiveSession() {
     startWorld(state.unlockedWorld);
     return;
   }
+  const resumeStatus = state.activeSession.status;
+  const lastFeedback = state.activeSession.lastFeedback;
   session = {
     ...state.activeSession,
     answered: false,
@@ -845,8 +1021,24 @@ function resumeActiveSession() {
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  if (state.activeSession.status === "result") {
+  if (resumeStatus === "result") {
     showWorldResult({ recordAttempt: false });
+  } else if (resumeStatus === "feedback" && lastFeedback) {
+    renderQuestion();
+    clearInterval(session.timer);
+    session.answered = true;
+    const buttons = [...elements.answers.querySelectorAll(".answer-button")];
+    const question = currentQuestion();
+    const currentError = session.errors.find((error) => error.questionIndex === session.questionIndex);
+    buttons.forEach((button, index) => {
+      button.disabled = true;
+      const destroyedCorrectSignal = lastFeedback.forceIncorrect
+        && index === currentError?.selectedAnswer;
+      if (index === question.correct && !destroyedCorrectSignal) button.classList.add("correct");
+      if (index === currentError?.selectedAnswer && !lastFeedback.isCorrect) button.classList.add("wrong");
+    });
+    showQuestionFeedback(lastFeedback.isCorrect, lastFeedback.timedOut, lastFeedback.forceIncorrect);
+    persistActiveSession({ status: "feedback", answered: true, lastFeedback });
   } else {
     renderQuestion();
   }
@@ -1104,6 +1296,7 @@ function playSound(type) {
     missionStart: [[196, 0, .1, .055, "sine"], [294, .1, .16, .06, "sine"]],
     correct: [[523, 0, .12, .08], [659, .1, .14, .075], [784, .2, .18, .07]],
     wrong: [[220, 0, .16, .07, "triangle"], [165, .13, .24, .065, "triangle"]],
+    eliminate: [[330, 0, .08, .045, "square"], [220, .07, .12, .04, "sine"]],
     timeout: [[260, 0, .1, .06, "square"], [195, .11, .1, .055, "square"], [130, .22, .28, .06, "triangle"]],
     celebration: [[523, 0, .16, .08], [659, .12, .16, .08], [784, .24, .18, .085], [1047, .4, .42, .09]],
     levelLoss: [[294, 0, .2, .06, "triangle"], [247, .17, .22, .06, "triangle"], [196, .36, .38, .065, "triangle"]]
@@ -1148,7 +1341,18 @@ elements.worlds.addEventListener("keydown", (event) => {
 
 elements.answers.addEventListener("click", (event) => {
   const button = event.target.closest(".answer-button");
-  if (button) answerQuestion(Number(button.dataset.answer));
+  if (!button) return;
+  if (getMissionMode().key === "anomaly") {
+    eliminateAnswer(Number(button.dataset.answer));
+  } else {
+    answerQuestion(Number(button.dataset.answer));
+  }
+});
+elements.feedbackContinue.addEventListener("click", () => {
+  if (elements.feedbackContinue.disabled) return;
+  elements.feedbackContinue.disabled = true;
+  nextQuestion();
+  elements.feedbackContinue.disabled = false;
 });
 
 document.addEventListener("keydown", (event) => {
@@ -1162,7 +1366,12 @@ document.addEventListener("keydown", (event) => {
     || elements.infoModal.classList.contains("visible")
   ) return;
   if (elements.game.classList.contains("visible") && ["1", "2", "3", "4"].includes(event.key)) {
-    answerQuestion(Number(event.key) - 1);
+    const answerIndex = Number(event.key) - 1;
+    if (getMissionMode().key === "anomaly") {
+      eliminateAnswer(answerIndex);
+    } else {
+      answerQuestion(answerIndex);
+    }
   }
   if (event.key === "Escape" && elements.game.classList.contains("visible")) closeGame();
 });
