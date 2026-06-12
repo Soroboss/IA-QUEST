@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -75,10 +75,8 @@
           <span class="next-mission-arrow" aria-hidden="true">→</span>
         </button>
         <div class="daily-row">
-          <div class="avatars" aria-hidden="true">
-            <span>AK</span><span>LM</span><span>JO</span>
-          </div>
-          <p><strong>2 847</strong> explorateurs ont joué aujourd’hui</p>
+          <div class="trust-mark" aria-hidden="true">✓</div>
+          <p><strong>10 mondes</strong> pour apprendre, pratiquer et vérifier ses connaissances en IA</p>
         </div>
       </div>
 
@@ -273,6 +271,7 @@
       <div class="result-details">
         <div><span>Bonnes réponses</span><strong id="result-correct">4 / 5</strong></div>
         <div><span>Seuil requis</span><strong>80 %</strong></div>
+        <div><span>Compétence travaillée</span><strong id="result-skill">Fondamentaux IA</strong></div>
       </div>
       <button class="primary-button full-button" id="result-action">Continuer <span>→</span></button>
     </article>
@@ -289,10 +288,10 @@
           <label><span>Nom</span><input id="register-lastname" name="lastname" type="text" autocomplete="family-name" required minlength="2" placeholder="Ex. Koné"></label>
           <label><span>Numéro WhatsApp</span><input id="register-phone" name="phone" type="tel" autocomplete="tel" required pattern="[+0-9 ()-]{8,20}" placeholder="Ex. +225 07 00 00 00 00"></label>
           <label id="identifier-field"><span id="identifier-label">Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="nom@exemple.com"></label>
-          <label class="full-field"><span>Mot de passe</span><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="6 caractères minimum"></label>
+          <label class="full-field"><span>Mot de passe</span><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="8 caractères minimum"></label>
         </div>
         <label class="consent-field"><input id="register-consent" type="checkbox" required><span>J’accepte que mes coordonnées et ma progression soient enregistrées pour le fonctionnement du jeu.</span></label>
-        <p class="privacy-note">Tes données sont protégées et ne sont pas publiques.</p>
+        <p class="privacy-note">Tes coordonnées servent uniquement à ton compte et à la synchronisation de ta progression.</p>
         <button class="primary-button full-button" id="register-submit" type="submit">Créer mon profil <span>→</span></button>
         <button class="text-button auth-switch" id="show-login" type="button">J’ai déjà un compte</button>
       </form>
@@ -370,7 +369,7 @@
       <p class="profile-message" id="profile-message"></p>
       <button class="primary-button full-button" id="profile-action">Continuer mon aventure <span>→</span></button>
       <button class="text-button profile-logout" id="logout-player">Changer de joueur</button>
-      <p class="sorobos-signature">Certifié par <strong>Soroboss</strong></p>
+      <p class="sorobos-signature">Parcours éducatif conçu par <strong>Soroboss</strong></p>
     </article>
   </div>
 

@@ -45,22 +45,7 @@ export async function verifyAccount(email, otp) {
 
 export async function signInAccount(identifier, password) {
   const client = requireClient();
-  let email = identifier.trim().toLowerCase();
-
-  if (!email.includes("@")) {
-    const { data: resolvedEmail, error: resolveError } = await client.database.rpc(
-      "resolve_login_email",
-      { login_value: identifier }
-    );
-    if (resolveError) throw resolveError;
-    email = typeof resolvedEmail === "string"
-      ? resolvedEmail
-      : Array.isArray(resolvedEmail)
-        ? resolvedEmail[0]
-        : resolvedEmail?.resolve_login_email;
-    if (!email) throw new Error("Aucun compte ne correspond à ce numéro WhatsApp.");
-  }
-
+  const email = identifier.trim().toLowerCase();
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
@@ -72,7 +57,7 @@ export function getFriendlyAuthError(error, context = "account") {
   const message = String(error?.message || "").toLowerCase();
 
   if (code.includes("INVALID_CREDENTIALS") || status === 401 || message.includes("invalid login")) {
-    return "Email, numéro WhatsApp ou mot de passe incorrect.";
+    return "Adresse email ou mot de passe incorrect.";
   }
   if (status === 403 || code.includes("EMAIL_NOT_VERIFIED") || message.includes("not verified")) {
     return "Ton adresse email doit être vérifiée avant la connexion.";
@@ -85,9 +70,6 @@ export function getFriendlyAuthError(error, context = "account") {
   }
   if (code.includes("OTP") || message.includes("code") || context === "verification") {
     return "Le code est invalide ou a expiré. Demande un nouveau code.";
-  }
-  if (message.includes("aucun compte")) {
-    return error.message;
   }
   if (context === "signup") {
     return "Impossible de créer le compte pour le moment. Réessaie dans quelques instants.";

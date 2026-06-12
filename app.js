@@ -467,6 +467,21 @@ const knowledgeSources = [
   }
 ];
 
+const PASS_THRESHOLD = 0.8;
+const BOARD_FINISH = 16;
+const worldSkills = [
+  "Comprendre les fondations de l’IA",
+  "Raisonner sur les données et l’apprentissage",
+  "Interpréter les modèles et leurs prédictions",
+  "Adopter un usage critique et responsable",
+  "Maîtriser l’IA générative et ses limites",
+  "Évaluer correctement les performances",
+  "Comprendre le langage et les embeddings",
+  "Relier les réponses à des connaissances vérifiables",
+  "Sécuriser les systèmes utilisant l’IA",
+  "Concevoir une solution IA utile et responsable"
+];
+
 const defaultState = {
   xp: 0,
   lives: 3,
@@ -477,6 +492,7 @@ const defaultState = {
   player: null,
   profileMilestones: [],
   activeSession: null,
+  lastPracticeWorld: null,
   userId: null
 };
 
@@ -566,6 +582,7 @@ const elements = {
   resultTitle: $("#result-title"),
   resultMessage: $("#result-message"),
   resultCorrect: $("#result-correct"),
+  resultSkill: $("#result-skill"),
   resultAction: $("#result-action"),
   resultRewardIcon: $("#result-reward-icon"),
   resultRewardLabel: $("#result-reward-label"),
@@ -649,7 +666,11 @@ function renderDashboard() {
   $("#player-initials").textContent = state.player ? getInitials(state.player) : "?";
   $("#player-chip").setAttribute("aria-label", state.player ? `Voir le profil de ${state.player.firstname}` : "Voir mon profil");
   $("#start-button").childNodes[0].textContent = state.player
-    ? (state.completedWorlds.length === worlds.length ? "Voir mon profil final " : "Continuer l’aventure ")
+    ? hasResumableSession()
+      ? "Reprendre ma partie "
+      : state.completedWorlds.length === worlds.length
+        ? "Entraînement expert "
+        : "Continuer l’aventure "
     : "Commencer l’aventure ";
   const missionIndex = hasResumableSession() ? state.activeSession.worldIndex : state.unlockedWorld;
   const missionWorld = worlds[Math.min(missionIndex, worlds.length - 1)];
@@ -657,12 +678,12 @@ function renderDashboard() {
   $("#next-mission-title").textContent = hasResumableSession()
     ? `Reprendre · ${missionWorld.title}`
     : state.completedWorlds.length === worlds.length
-      ? "Ton profil IA est terminé"
+      ? "Entraînement expert"
       : `Monde ${missionIndex + 1} · ${missionWorld.title}`;
   $("#next-mission-text").textContent = hasResumableSession()
     ? `Mission ${Math.min(state.activeSession.questionIndex + 1, state.activeSession.questions.length)} sur ${state.activeSession.questions.length} · progression sauvegardée`
     : state.completedWorlds.length === worlds.length
-      ? "Découvre ton niveau final et ton parcours accompli"
+      ? "Rejoue un monde aléatoire pour consolider tes compétences"
       : "5 missions · objectif 80 % · bonus +50 XP";
 
   elements.worlds.innerHTML = chapterWorlds.map((world, localIndex) => {
@@ -683,19 +704,19 @@ function renderDashboard() {
   }).join("");
 }
 
-function startWorld(worldIndex = state.unlockedWorld) {
+function startWorld(worldIndex = state.unlockedWorld, { practice = false } = {}) {
   if (!state.player) {
     openRegister();
     return;
   }
-  if (worldIndex > state.unlockedWorld || state.completedWorlds.includes(worldIndex)) return;
+  if (!practice && (worldIndex > state.unlockedWorld || state.completedWorlds.includes(worldIndex))) return;
   if (state.lives <= 0) {
     state.lives = 3;
     showToast("Tes 3 cœurs ont été rechargés. Nouvelle tentative !", "success");
   }
   session = {
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
-    correctCount: 0, errors: [], boardPosition: 0, lastRoll: null,
+    correctCount: 0, errors: [], boardPosition: 0, lastRoll: null, practice,
     wordDrafts: {}, wordRacks: {}, wordHints: {}, reviewIndex: 0, timer: null, timeLeft: 60,
     questions: shuffleQuestions(worlds[worldIndex].questions.map((question, index) => ({
       ...question,
@@ -755,8 +776,8 @@ function renderQuestion() {
   elements.answers.className = `answers mode-${missionMode.key}`;
   elements.answers.innerHTML = question.answers.map((answer, index) => `
     <button class="answer-button" data-answer="${index}">
-      <span class="answer-key">${String.fromCharCode(65 + index)}</span>
-      <span class="answer-content"><small>${missionMode.optionLabel} ${String.fromCharCode(65 + index)}</small>${answer}</span>
+      <span class="answer-key">${index + 1}</span>
+      <span class="answer-content"><small>${missionMode.optionLabel} ${index + 1}</small>${answer}</span>
     </button>
   `).join("");
   if (isWordMission(missionMode)) renderWordGame();
@@ -936,12 +957,11 @@ function submitWord() {
 
 function renderAdventureBoard() {
   session.boardPosition ??= 0;
-  const finish = 14;
-  elements.boardTrack.innerHTML = Array.from({ length: finish + 1 }, (_, index) => {
-    const special = index === 0 ? "start" : index === finish ? "finish" : index % 4 === 0 ? "bonus" : "";
+  elements.boardTrack.innerHTML = Array.from({ length: BOARD_FINISH + 1 }, (_, index) => {
+    const special = index === 0 ? "start" : index === BOARD_FINISH ? "finish" : index % 4 === 0 ? "bonus" : "";
     const occupied = index === session.boardPosition;
     return `<span class="board-cell ${special} ${occupied ? "occupied" : ""}">
-      ${occupied ? `<i aria-label="Ton pion">S</i>` : index === finish ? "★" : index === 0 ? "D" : ""}
+      ${occupied ? `<i aria-label="Ton pion">S</i>` : index === BOARD_FINISH ? "★" : index === 0 ? "D" : ""}
     </span>`;
   }).join("");
   elements.diceValue.textContent = session.lastRoll ?? "–";
@@ -959,10 +979,14 @@ function moveBoardPawn(isCorrect) {
   }
   const roll = 2 + Math.floor(Math.random() * 4);
   const previousPosition = session.boardPosition || 0;
+  const target = Math.ceil(session.questions.length * PASS_THRESHOLD);
+  const objectiveReached = session.correctCount >= target;
   session.lastRoll = roll;
-  session.boardPosition = Math.min(14, previousPosition + roll);
+  session.boardPosition = objectiveReached
+    ? BOARD_FINISH
+    : Math.min(BOARD_FINISH - 1, previousPosition + roll);
   const landedOnBonus = session.boardPosition > 0
-    && session.boardPosition < 14
+    && session.boardPosition < BOARD_FINISH
     && session.boardPosition % 4 === 0;
   if (landedOnBonus) {
     session.score += 5;
@@ -972,14 +996,16 @@ function moveBoardPawn(isCorrect) {
     renderDashboard();
   }
   renderAdventureBoard();
-  if (landedOnBonus) {
+  if (objectiveReached) {
+    elements.boardMessage.textContent = "Objectif de 80 % atteint · ton pion rejoint le centre de maîtrise !";
+  } else if (landedOnBonus) {
     elements.boardMessage.textContent = `Case ÉCLAIR atteinte avec un ${roll} · +5 XP de curiosité !`;
     playSound("boardBonus");
   }
 }
 
 function updateMissionGoal() {
-  const target = Math.ceil(session.questions.length * 0.8);
+  const target = Math.ceil(session.questions.length * PASS_THRESHOLD);
   const remaining = Math.max(0, target - session.correctCount);
   elements.goalStatus.textContent = `${session.correctCount} / ${target}`;
   elements.goalProgress.style.width = `${Math.min(100, (session.correctCount / target) * 100)}%`;
@@ -1008,6 +1034,7 @@ function updateTimer() {
   elements.timerPill.classList.toggle("warning", session.timeLeft <= 10 && session.timeLeft > 5);
   elements.timerPill.classList.toggle("danger", session.timeLeft <= 5);
   const shouldPulse = session.timeLeft > 0
+    && session.timeLeft <= 15
     && (session.timeLeft <= 10 || session.timeLeft % 2 === 0);
   if (shouldPulse && lastTimerSound !== session.timeLeft) {
     lastTimerSound = session.timeLeft;
@@ -1098,7 +1125,7 @@ function showQuestionFeedback(isCorrect, timedOut, forceIncorrect = false) {
       : timedOut
         ? "Le temps a expiré"
         : "Cette option pouvait induire en erreur";
-  elements.feedbackExplanation.textContent = question.lesson;
+  elements.feedbackExplanation.textContent = `${question.lesson} Exemple : ${question.example}`;
   elements.feedbackSource.href = source.url;
   elements.feedbackSourceName.textContent = source.name;
   elements.feedbackContinue.innerHTML = session.questionIndex === session.questions.length - 1
@@ -1136,8 +1163,20 @@ function closeLesson() {
   state.lives = 3;
   saveState();
   renderDashboard();
-  startWorld(session.worldIndex);
+  startWorld(session.worldIndex, { practice: Boolean(session.practice) });
   showToast("Révision terminée · nouvelle tentative !", "success");
+}
+
+function startExpertPractice() {
+  const candidates = worlds.map((_, index) => index)
+    .filter((index) => index >= 5)
+    .filter((index) => index !== state.lastPracticeWorld);
+  const worldIndex = candidates[Math.floor(Math.random() * candidates.length)] ?? 0;
+  state.lastPracticeWorld = worldIndex;
+  saveState();
+  closeProfile();
+  startWorld(worldIndex, { practice: true });
+  showToast(`Entraînement expert · ${worlds[worldIndex].title}`, "success");
 }
 
 function nextQuestion() {
@@ -1154,7 +1193,7 @@ function showWorldResult({ recordAttempt = true } = {}) {
   clearInterval(session.timer);
   const total = session.questions.length;
   const percentage = Math.round((session.correctCount / total) * 100);
-  const passed = percentage >= 80;
+  const passed = percentage >= PASS_THRESHOLD * 100;
   const timedOutCount = session.errors.filter((error) => error.timedOut).length;
   playSound(passed ? "celebration" : "levelLoss");
   showGameEffect(
@@ -1178,25 +1217,34 @@ function showWorldResult({ recordAttempt = true } = {}) {
 
   elements.resultScore.textContent = `${percentage}%`;
   elements.resultCorrect.textContent = `${session.correctCount} / ${total}`;
+  elements.resultSkill.textContent = worldSkills[session.worldIndex];
   elements.resultCard.classList.toggle("failed", !passed);
   elements.resultEyebrow.textContent = passed ? "NIVEAU RÉUSSI" : "RÉVISION OBLIGATOIRE";
-  elements.resultTitle.textContent = passed ? "Mission accomplie !" : "Tu peux encore progresser";
+  elements.resultTitle.textContent = passed
+    ? session.practice ? "Entraînement validé !" : "Mission accomplie !"
+    : "Tu peux encore progresser";
   elements.resultMessage.textContent = passed
-    ? "Tu as atteint le seuil de 80 %. Le monde suivant est maintenant accessible."
+    ? session.practice
+      ? "Tu as consolidé cette compétence. Les notions restent disponibles pour continuer à t’entraîner."
+      : "Tu as atteint le seuil de 80 %. Le monde suivant est maintenant accessible."
     : `Il faut au moins 80 % pour avancer. Lis les ${session.errors.length} cours liés à tes erreurs, puis reprends ce niveau.`;
   elements.resultRewardIcon.textContent = passed ? "⚡" : "📘";
   elements.resultRewardLabel.textContent = passed ? "RÉCOMPENSE OBTENUE" : "TA PROCHAINE FORCE";
   elements.resultRewardText.textContent = passed
-    ? "+50 XP et accès au prochain monde"
+    ? session.practice
+      ? "Compétence consolidée et XP conservée"
+      : "+50 XP et accès au prochain monde"
     : `${session.errors.length} cours personnalisés pour réussir la prochaine tentative`;
   const nextWorld = worlds[session.worldIndex + 1];
-  elements.nextWorldPreview.hidden = !passed || !nextWorld;
-  if (passed && nextWorld) {
+  elements.nextWorldPreview.hidden = session.practice || !passed || !nextWorld;
+  if (!session.practice && passed && nextWorld) {
     elements.nextWorldTitle.textContent = `Monde ${session.worldIndex + 2} · ${nextWorld.title}`;
     elements.nextWorldDescription.textContent = nextWorld.subtitle;
   }
   elements.resultAction.innerHTML = passed
-    ? session.worldIndex === 9
+    ? session.practice
+      ? `Retourner à mon profil <span>→</span>`
+      : session.worldIndex === 9
       ? `Découvrir mon profil final <span>→</span>`
       : session.worldIndex === 4
         ? `Découvrir le parcours expert <span>→</span>`
@@ -1209,6 +1257,15 @@ function showWorldResult({ recordAttempt = true } = {}) {
 
 function completeWorld(continuePlaying = false) {
   const worldIndex = session.worldIndex;
+  if (session.practice) {
+    state.activeSession = null;
+    saveState();
+    closeResult();
+    closeGame();
+    showToast("Entraînement terminé · tes XP sont enregistrés.", "success");
+    openProfile();
+    return;
+  }
   if (!state.completedWorlds.includes(worldIndex)) {
     state.completedWorlds.push(worldIndex);
     state.xp += 50;
@@ -1286,7 +1343,7 @@ function hasResumableSession() {
     && saved.questions.length
     && saved.worldIndex >= 0
     && saved.worldIndex < worlds.length
-    && !state.completedWorlds.includes(saved.worldIndex)
+    && (saved.practice || !state.completedWorlds.includes(saved.worldIndex))
   );
 }
 
@@ -1400,15 +1457,17 @@ function setAuthMode(mode) {
   $(".privacy-note").hidden = isLogin;
   $("#auth-eyebrow").textContent = isLogin ? "CONNEXION JOUEUR" : "CRÉER MON PROFIL";
   $("#auth-intro").textContent = isLogin
-    ? "Entre ton adresse email ou ton numéro WhatsApp, puis ton mot de passe."
+    ? "Entre l’adresse email de ton compte, puis ton mot de passe."
     : "Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.";
-  $("#identifier-label").textContent = isLogin ? "Email ou numéro WhatsApp" : "Adresse email";
-  $("#register-email").type = isLogin ? "text" : "email";
-  $("#register-email").placeholder = isLogin ? "Email ou WhatsApp" : "nom@exemple.com";
+  $("#identifier-label").textContent = "Adresse email";
+  $("#register-email").type = "email";
+  $("#register-email").placeholder = "nom@exemple.com";
   $("#register-email").autocomplete = isLogin ? "username" : "email";
   $("#identifier-field").classList.toggle("full-field", isLogin);
   $("#register-password").closest("label").classList.toggle("full-field", true);
   $("#register-password").autocomplete = isLogin ? "current-password" : "new-password";
+  $("#register-password").minLength = isLogin ? 1 : 8;
+  $("#register-password").placeholder = isLogin ? "Ton mot de passe" : "8 caractères minimum";
   $("#register-title").textContent = isLogin ? "Reprendre mon aventure" : "Bienvenue dans IA Quest";
   $("#register-submit").innerHTML = isLogin
     ? `Se connecter <span>→</span>`
@@ -1489,12 +1548,12 @@ function openProfile(milestone = false) {
   $("#profile-xp").textContent = `${state.xp} XP`;
   $("#profile-chapter").textContent = mastered >= 10 ? "Maîtrise complète" : advanced ? "Expert" : "Initiation";
   $("#profile-message").textContent = mastered >= 10
-    ? `${state.player.firstname}, tu as maîtrisé les dix mondes. Ton profil démontre une compréhension avancée, critique et responsable de l’intelligence artificielle.`
+    ? `${state.player.firstname}, tu as maîtrisé les dix mondes. Le mode entraînement expert te propose maintenant des notions aléatoires pour entretenir tes acquis sans perdre ta progression.`
     : mastered >= 5
       ? `${state.player.firstname}, tu maîtrises les fondamentaux. Soroboss débloque maintenant cinq nouveaux mondes plus complexes et entièrement inédits.`
       : `${state.player.firstname}, poursuis ton parcours pour renforcer ton profil et débloquer le niveau expert.`;
   $("#profile-action").innerHTML = mastered >= 10
-    ? `Revoir mon parcours <span>→</span>`
+    ? `Lancer un entraînement expert <span>→</span>`
     : milestone && mastered === 5
       ? `Découvrir les mondes experts <span>→</span>`
       : `Continuer mon aventure <span>→</span>`;
@@ -1691,8 +1750,12 @@ $("#start-button").addEventListener("click", () => {
     openRegister();
     return;
   }
+  if (hasResumableSession()) {
+    resumeActiveSession();
+    return;
+  }
   if (state.completedWorlds.length === worlds.length) {
-    openProfile();
+    startExpertPractice();
     return;
   }
   startWorld(state.unlockedWorld);
@@ -1715,7 +1778,7 @@ $("#next-mission").addEventListener("click", () => {
   } else if (hasResumableSession()) {
     resumeActiveSession();
   } else if (state.completedWorlds.length === worlds.length) {
-    openProfile();
+    startExpertPractice();
   } else {
     startWorld(state.unlockedWorld);
   }
@@ -1798,7 +1861,13 @@ $("#welcome-action").addEventListener("click", () => {
 $("#welcome-dashboard").addEventListener("click", closeWelcome);
 $("#player-chip").addEventListener("click", () => openProfile());
 $("#close-profile").addEventListener("click", closeProfile);
-$("#profile-action").addEventListener("click", closeProfile);
+$("#profile-action").addEventListener("click", () => {
+  if (state.completedWorlds.length === worlds.length) {
+    startExpertPractice();
+  } else {
+    closeProfile();
+  }
+});
 $("#logout-player").addEventListener("click", async () => {
   try {
     await signOutAccount();
