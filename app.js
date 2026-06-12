@@ -313,17 +313,77 @@ worlds.push(
   }
 );
 
-const worldKeywords = [
-  ["SYSTEME", "SIGNAL", "PARAMETRE", "LIMITES", "SPECIALISEE"],
-  ["DONNEES", "ETIQUETTE", "TEST", "BIAIS", "MEMOIRE"],
-  ["PREDICTION", "MODELE", "COUCHE", "CONFIANCE", "EXPLICATION"],
-  ["VERIFIER", "SECRET", "BIAIS", "HUMAIN", "AUDIT"],
-  ["GENERER", "PROMPT", "HALLUCINATION", "CONTEXTE", "SOURCES"],
-  ["RAPPEL", "POSITIF", "EXACTITUDE", "MATRICE", "CALIBRAGE"],
-  ["TOKEN", "VECTEUR", "CONTEXTE", "COSINUS", "TOKENISER"],
-  ["RAG", "ACTUALISER", "FRAGMENT", "RECHERCHE", "CITATION"],
-  ["INJECTION", "VALIDATION", "PRIVILEGE", "ATTAQUE", "JOURNAUX"],
-  ["BESOIN", "REGLE", "DERIVE", "HUMAIN", "IMPACT"]
+const worldWordPuzzles = [
+  [
+    { keyword: "SYSTEME", clue: "Ensemble informatique capable d’accomplir une tâche associée à l’intelligence." },
+    { keyword: "SIGNAL", clue: "Information sonore qu’une application peut analyser pour reconnaître une chanson." },
+    { keyword: "PARAMETRES", clue: "Valeurs internes qu’un modèle ajuste pendant son apprentissage." },
+    { keyword: "COMPRENDRE", clue: "Capacité humaine que produire une réponse convaincante ne garantit pas à une IA." },
+    { keyword: "SPECIALISEE", clue: "Se dit d’une IA conçue pour maîtriser un domaine ou une famille de tâches précise." }
+  ],
+  [
+    { keyword: "EXEMPLES", clue: "Éléments fournis au modèle dans les données d’entraînement pour qu’il apprenne." },
+    { keyword: "ETIQUETTE", clue: "Information cible associée à une donnée dans l’apprentissage supervisé." },
+    { keyword: "TEST", clue: "Jeu de données inédit utilisé pour mesurer la capacité de généralisation." },
+    { keyword: "BIAIS", clue: "Distorsion pouvant apparaître lorsque les données représentent mal certaines situations." },
+    { keyword: "SURAPPRENTISSAGE", clue: "Phénomène où un modèle mémorise son entraînement mais généralise mal." }
+  ],
+  [
+    { keyword: "ESTIMATION", clue: "Nature d’une prédiction calculée par un modèle, contrairement à une certitude." },
+    { keyword: "MODELE", clue: "Ensemble de calculs paramétrés appris à partir de données." },
+    { keyword: "COUCHES", clue: "Étapes successives d’un réseau de neurones qui transforment les représentations." },
+    { keyword: "CALIBRAGE", clue: "Qualité nécessaire pour que les niveaux de confiance reflètent les fréquences réelles." },
+    { keyword: "EXPLICABILITE", clue: "Méthodes utilisées pour comprendre les facteurs ayant influencé une décision du modèle." }
+  ],
+  [
+    { keyword: "VERIFIER", clue: "Action indispensable avant d’utiliser une réponse importante produite par une IA." },
+    { keyword: "CONFIDENTIEL", clue: "Type de document qu’il ne faut pas transmettre à un chatbot public sans garanties." },
+    { keyword: "BIAIS", clue: "Performance systématiquement injuste ou différente selon certains groupes." },
+    { keyword: "RESPONSABLE", clue: "Rôle que l’humain ou l’organisation conserve lorsqu’une IA aide à décider." },
+    { keyword: "AUDIT", clue: "Examen structuré des données, performances et impacts d’un système d’IA." }
+  ],
+  [
+    { keyword: "GENERER", clue: "Produire un nouveau contenu à partir de structures apprises." },
+    { keyword: "PROMPT", clue: "Instruction ou demande adressée à un modèle génératif." },
+    { keyword: "HALLUCINATION", clue: "Information inventée par une IA et présentée de manière convaincante." },
+    { keyword: "CONTEXTE", clue: "Informations de situation qui rendent une instruction plus précise et moins ambiguë." },
+    { keyword: "SOURCES", clue: "Références qu’il faut ouvrir et contrôler avant de croire une affirmation générée." }
+  ],
+  [
+    { keyword: "RAPPEL", clue: "Métrique qui mesure la proportion de cas positifs réellement détectés." },
+    { keyword: "FAUXPOSITIF", clue: "Cas négatif annoncé à tort comme positif par un modèle." },
+    { keyword: "DESEQUILIBRE", clue: "Caractéristique d’un jeu où une classe est beaucoup plus rare que les autres." },
+    { keyword: "MATRICE", clue: "Tableau de confusion regroupant vrais et faux positifs et négatifs." },
+    { keyword: "CALIBRAGE", clue: "Correspondance entre les probabilités annoncées et les fréquences observées." }
+  ],
+  [
+    { keyword: "TOKEN", clue: "Unité de texte manipulée par un modèle de langage." },
+    { keyword: "VECTEUR", clue: "Représentation numérique utilisée pour encoder un embedding." },
+    { keyword: "CONTEXTE", clue: "Quantité d’information qu’un modèle peut considérer pour produire une réponse." },
+    { keyword: "COSINUS", clue: "Mesure souvent utilisée pour comparer la direction de deux embeddings." },
+    { keyword: "TOKENISATION", clue: "Découpage du texte en unités transformables en représentations numériques." }
+  ],
+  [
+    { keyword: "RECUPERATION", clue: "Étape du RAG qui recherche des passages pertinents avant la génération." },
+    { keyword: "ACTUALISER", clue: "Ce qu’on peut faire à la base documentaire d’un RAG sans réentraîner le modèle." },
+    { keyword: "FRAGMENTS", clue: "Morceaux de documents indexés pour retrouver des passages précis." },
+    { keyword: "PERTINENCE", clue: "Qualité qui peut manquer lorsque la récupération sélectionne de mauvais passages." },
+    { keyword: "CITATIONS", clue: "Références affichées pour rendre une réponse RAG contrôlable." }
+  ],
+  [
+    { keyword: "INJECTION", clue: "Attaque qui tente de détourner les instructions données à un modèle." },
+    { keyword: "VALIDATION", clue: "Contrôle nécessaire avant d’exécuter du code produit par une IA." },
+    { keyword: "PRIVILEGE", clue: "Droit d’accès que le principe du moindre niveau cherche à limiter." },
+    { keyword: "REDTEAMING", clue: "Recherche offensive de failles et de comportements dangereux avant le déploiement." },
+    { keyword: "JOURNAUX", clue: "Traces conservées pour auditer les actions d’un agent IA." }
+  ],
+  [
+    { keyword: "BESOIN", clue: "Problème utilisateur précis à définir avant de choisir un modèle." },
+    { keyword: "REGLE", clue: "Solution classique préférable à l’IA lorsque le problème est simple et stable." },
+    { keyword: "MONITORING", clue: "Surveillance continue des performances, erreurs et dérives après déploiement." },
+    { keyword: "HUMAIN", clue: "Acteur à maintenir dans la boucle pour les décisions sensibles ou ambiguës." },
+    { keyword: "IMPACT", clue: "Résultat réel et mesurable qui permet de juger la valeur d’une solution IA." }
+  ]
 ];
 
 const missionModes = [
@@ -439,6 +499,7 @@ let session = {
   lastRoll: null,
   wordDrafts: {},
   wordRacks: {},
+  wordHints: {},
   reviewIndex: 0,
   timer: null,
   timeLeft: 60
@@ -475,6 +536,7 @@ const elements = {
   wordSlots: $("#word-slots"),
   letterRack: $("#letter-rack"),
   clearWord: $("#clear-word"),
+  hintWord: $("#hint-word"),
   validateWord: $("#validate-word"),
   questionFeedback: $("#question-feedback"),
   feedbackIcon: $("#feedback-icon"),
@@ -634,10 +696,10 @@ function startWorld(worldIndex = state.unlockedWorld) {
   session = {
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
     correctCount: 0, errors: [], boardPosition: 0, lastRoll: null,
-    wordDrafts: {}, wordRacks: {}, reviewIndex: 0, timer: null, timeLeft: 60,
+    wordDrafts: {}, wordRacks: {}, wordHints: {}, reviewIndex: 0, timer: null, timeLeft: 60,
     questions: shuffleQuestions(worlds[worldIndex].questions.map((question, index) => ({
       ...question,
-      keyword: worldKeywords[worldIndex][index]
+      ...worldWordPuzzles[worldIndex][index]
     })))
   };
   unlockAudio();
@@ -671,7 +733,7 @@ function renderQuestion() {
   elements.missionBriefLabel.textContent = `DOSSIER ${String(session.worldIndex + 1).padStart(2, "0")} · ${world.title.toUpperCase()}`;
   elements.missionBriefText.textContent = missionMode.brief;
   elements.topic.textContent = world.title.toUpperCase();
-  elements.question.textContent = question.question;
+  elements.question.textContent = isWordMission(missionMode) ? question.clue : question.question;
   elements.sessionScore.textContent = session.score;
   elements.sessionStreak.textContent = session.streak;
   updateMissionGoal();
@@ -735,8 +797,13 @@ function getLetterScore(letter) {
 }
 
 function getFixedWordPositions(target, mode) {
-  if (mode.key !== "crossword") return [];
-  return [...target].map((_, index) => index).filter((index) => index % 3 === 0);
+  const crossedPositions = mode.key === "crossword"
+    ? [...target].map((_, index) => index).filter((index) => index % 3 === 0)
+    : [];
+  const hintPosition = session.wordHints?.[session.questionIndex];
+  return hintPosition === undefined
+    ? crossedPositions
+    : [...new Set([...crossedPositions, hintPosition])];
 }
 
 function ensureWordRack() {
@@ -767,8 +834,8 @@ function renderWordGame(reveal = false, incorrect = false) {
   elements.wordGame.className = `word-game ${mode.key}${reveal ? " revealed" : ""}${incorrect ? " incorrect" : ""}`;
   elements.wordGameLabel.textContent = mode.key === "crossword" ? "MOT CROISÉ IA" : "CHEVALET IA";
   elements.wordGameHint.textContent = mode.key === "crossword"
-    ? "Les cases cyan sont des lettres croisées déjà trouvées"
-    : "Place les tuiles dans le bon ordre";
+    ? "Définition exacte : les cases cyan sont des lettres déjà croisées"
+    : "Définition exacte : place les tuiles dans le bon ordre";
   elements.wordGameLength.textContent = `${target.length} LETTRES`;
   elements.wordSlots.innerHTML = [...target].map((letter, position) => {
     if (fixedPositions.includes(position)) {
@@ -792,6 +859,12 @@ function renderWordGame(reveal = false, incorrect = false) {
   const requiredLetters = target.length - fixedPositions.length;
   elements.validateWord.disabled = reveal || draft.length !== requiredLetters;
   elements.clearWord.disabled = reveal || draft.length === 0;
+  elements.hintWord.disabled = reveal
+    || draft.length > 0
+    || session.wordHints?.[session.questionIndex] !== undefined;
+  elements.hintWord.textContent = session.wordHints?.[session.questionIndex] !== undefined
+    ? "Joker NOVA utilisé"
+    : "Joker NOVA · 1 lettre";
 }
 
 function selectLetter(letterIndex) {
@@ -821,6 +894,25 @@ function clearWordDraft() {
   if (session.answered) return;
   session.wordDrafts[session.questionIndex] = [];
   playSound("tile");
+  persistActiveSession();
+  renderWordGame();
+}
+
+function revealWordHint() {
+  if (session.answered) return;
+  session.wordHints ||= {};
+  if (session.wordHints[session.questionIndex] !== undefined) return;
+  const target = normalizeWord(currentQuestion().keyword);
+  const basePositions = getMissionMode().key === "crossword"
+    ? [...target].map((_, index) => index).filter((index) => index % 3 === 0)
+    : [];
+  const availablePositions = [...target].map((_, index) => index)
+    .filter((index) => !basePositions.includes(index));
+  session.wordHints[session.questionIndex] = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+  session.wordDrafts[session.questionIndex] = [];
+  delete session.wordRacks[session.questionIndex];
+  playSound("hint");
+  showToast("NOVA révèle une lettre · bonus de mot réduit de 5 XP");
   persistActiveSession();
   renderWordGame();
 }
@@ -866,9 +958,24 @@ function moveBoardPawn(isCorrect) {
     return;
   }
   const roll = 2 + Math.floor(Math.random() * 4);
+  const previousPosition = session.boardPosition || 0;
   session.lastRoll = roll;
-  session.boardPosition = Math.min(14, (session.boardPosition || 0) + roll);
+  session.boardPosition = Math.min(14, previousPosition + roll);
+  const landedOnBonus = session.boardPosition > 0
+    && session.boardPosition < 14
+    && session.boardPosition % 4 === 0;
+  if (landedOnBonus) {
+    session.score += 5;
+    state.xp += 5;
+    elements.sessionScore.textContent = session.score;
+    saveState();
+    renderDashboard();
+  }
   renderAdventureBoard();
+  if (landedOnBonus) {
+    elements.boardMessage.textContent = `Case ÉCLAIR atteinte avec un ${roll} · +5 XP de curiosité !`;
+    playSound("boardBonus");
+  }
 }
 
 function updateMissionGoal() {
@@ -924,7 +1031,11 @@ function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
 
   if (isCorrect) {
     const wordBonus = isWordMission()
-      ? Math.min(15, [...normalizeWord(question.keyword)].reduce((total, letter) => total + getLetterScore(letter), 0))
+      ? Math.max(
+        0,
+        Math.min(15, [...normalizeWord(question.keyword)].reduce((total, letter) => total + getLetterScore(letter), 0))
+          - (session.wordHints?.[session.questionIndex] !== undefined ? 5 : 0)
+      )
       : 0;
     const earnedXp = 20 + Math.min(session.streak, 3) * 5 + wordBonus;
     session.score += earnedXp;
@@ -1196,10 +1307,10 @@ function resumeActiveSession() {
   session.lastRoll ??= null;
   session.wordDrafts ||= {};
   session.wordRacks ||= {};
+  session.wordHints ||= {};
   session.questions = session.questions.map((question) => {
-    if (question.keyword) return question;
     const originalIndex = worlds[session.worldIndex].questions.findIndex((item) => item.question === question.question);
-    return { ...question, keyword: worldKeywords[session.worldIndex][Math.max(0, originalIndex)] };
+    return { ...question, ...worldWordPuzzles[session.worldIndex][Math.max(0, originalIndex)] };
   });
   unlockAudio();
   elements.game.classList.add("visible");
@@ -1480,6 +1591,8 @@ function playSound(type) {
   const melodies = {
     missionStart: [[196, 0, .1, .055, "sine"], [294, .1, .16, .06, "sine"]],
     tile: [[420, 0, .045, .025, "sine"], [520, .04, .05, .02, "sine"]],
+    hint: [[620, 0, .08, .035, "sine"], [780, .08, .12, .035, "sine"]],
+    boardBonus: [[392, 0, .08, .045], [523, .08, .1, .05], [659, .17, .16, .055]],
     correct: [[523, 0, .12, .08], [659, .1, .14, .075], [784, .2, .18, .07]],
     wrong: [[220, 0, .16, .07, "triangle"], [165, .13, .24, .065, "triangle"]],
     eliminate: [[330, 0, .08, .045, "square"], [220, .07, .12, .04, "sine"]],
@@ -1539,6 +1652,7 @@ elements.wordSlots.addEventListener("click", (event) => {
   if (slot) removeLetter(Number(slot.dataset.draftIndex));
 });
 elements.clearWord.addEventListener("click", clearWordDraft);
+elements.hintWord.addEventListener("click", revealWordHint);
 elements.validateWord.addEventListener("click", submitWord);
 elements.feedbackContinue.addEventListener("click", () => {
   if (elements.feedbackContinue.disabled) return;
