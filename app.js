@@ -441,7 +441,7 @@ let session = {
   wordRacks: {},
   reviewIndex: 0,
   timer: null,
-  timeLeft: 20
+  timeLeft: 60
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -634,7 +634,7 @@ function startWorld(worldIndex = state.unlockedWorld) {
   session = {
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
     correctCount: 0, errors: [], boardPosition: 0, lastRoll: null,
-    wordDrafts: {}, wordRacks: {}, reviewIndex: 0, timer: null, timeLeft: 20,
+    wordDrafts: {}, wordRacks: {}, reviewIndex: 0, timer: null, timeLeft: 60,
     questions: shuffleQuestions(worlds[worldIndex].questions.map((question, index) => ({
       ...question,
       keyword: worldKeywords[worldIndex][index]
@@ -685,7 +685,7 @@ function renderQuestion() {
           ? `Plus que ${remaining} bonne${remaining > 1 ? "s" : ""} réponse${remaining > 1 ? "s" : ""} pour atteindre l’objectif.`
           : isWordMission(missionMode)
             ? "Lis l’indice, observe les lettres révélées et construis le terme technique."
-            : "Tu as 20 secondes. Analyse la situation avant d’agir.";
+            : "Tu as 1 minute. Analyse la situation avant d’agir.";
 
   elements.questionFeedback.hidden = true;
   elements.wordGame.hidden = !isWordMission(missionMode);
@@ -883,7 +883,7 @@ function updateMissionGoal() {
 
 function startTimer() {
   clearInterval(session.timer);
-  session.timeLeft = isWordMission() ? 35 : 20;
+  session.timeLeft = 60;
   lastTimerSound = null;
   updateTimer();
   session.timer = setInterval(() => {
@@ -1190,7 +1190,7 @@ function resumeActiveSession() {
     ...state.activeSession,
     answered: false,
     timer: null,
-    timeLeft: 20
+    timeLeft: 60
   };
   session.boardPosition ??= 0;
   session.lastRoll ??= null;
