@@ -313,6 +313,19 @@ worlds.push(
   }
 );
 
+const worldKeywords = [
+  ["SYSTEME", "SIGNAL", "PARAMETRE", "LIMITES", "SPECIALISEE"],
+  ["DONNEES", "ETIQUETTE", "TEST", "BIAIS", "MEMOIRE"],
+  ["PREDICTION", "MODELE", "COUCHE", "CONFIANCE", "EXPLICATION"],
+  ["VERIFIER", "SECRET", "BIAIS", "HUMAIN", "AUDIT"],
+  ["GENERER", "PROMPT", "HALLUCINATION", "CONTEXTE", "SOURCES"],
+  ["RAPPEL", "POSITIF", "EXACTITUDE", "MATRICE", "CALIBRAGE"],
+  ["TOKEN", "VECTEUR", "CONTEXTE", "COSINUS", "TOKENISER"],
+  ["RAG", "ACTUALISER", "FRAGMENT", "RECHERCHE", "CITATION"],
+  ["INJECTION", "VALIDATION", "PRIVILEGE", "ATTAQUE", "JOURNAUX"],
+  ["BESOIN", "REGLE", "DERIVE", "HUMAIN", "IMPACT"]
+];
+
 const missionModes = [
   {
     key: "scanner",
@@ -329,11 +342,11 @@ const missionModes = [
     optionLabel: "ACTION"
   },
   {
-    key: "anomaly",
-    title: "CHASSE À L’ERREUR",
-    icon: "◎",
-    brief: "Élimine les trois faux signaux sans supprimer l’affirmation techniquement juste.",
-    optionLabel: "TOUCHER POUR ÉLIMINER"
+    key: "crossword",
+    title: "GRILLE CROISÉE",
+    icon: "▦",
+    brief: "Complète le mot-clé de l’IA grâce aux lettres déjà révélées dans la grille.",
+    optionLabel: "LETTRE"
   },
   {
     key: "incident",
@@ -343,11 +356,11 @@ const missionModes = [
     optionLabel: "PROTOCOLE"
   },
   {
-    key: "architect",
-    title: "LABORATOIRE IA",
-    icon: "△",
-    brief: "Construis une solution fiable en choisissant le principe technique le plus adapté.",
-    optionLabel: "MODULE"
+    key: "tiles",
+    title: "ATELIER DE MOTS",
+    icon: "▣",
+    brief: "Construis le terme technique attendu avec ton chevalet de lettres.",
+    optionLabel: "LETTRE"
   }
 ];
 
@@ -422,6 +435,10 @@ let session = {
   answered: false,
   correctCount: 0,
   errors: [],
+  boardPosition: 0,
+  lastRoll: null,
+  wordDrafts: {},
+  wordRacks: {},
   reviewIndex: 0,
   timer: null,
   timeLeft: 20
@@ -451,6 +468,14 @@ const elements = {
   topic: $("#question-topic"),
   question: $("#question-text"),
   answers: $("#answers-list"),
+  wordGame: $("#word-game"),
+  wordGameLabel: $("#word-game-label"),
+  wordGameHint: $("#word-game-hint"),
+  wordGameLength: $("#word-game-length"),
+  wordSlots: $("#word-slots"),
+  letterRack: $("#letter-rack"),
+  clearWord: $("#clear-word"),
+  validateWord: $("#validate-word"),
   questionFeedback: $("#question-feedback"),
   feedbackIcon: $("#feedback-icon"),
   feedbackLabel: $("#feedback-label"),
@@ -465,6 +490,9 @@ const elements = {
   goalProgress: $("#goal-progress-bar"),
   goalMessage: $("#goal-message"),
   guide: $("#guide-message"),
+  boardTrack: $("#board-track"),
+  boardMessage: $("#board-message"),
+  diceValue: $("#dice-value"),
   lessonModal: $("#lesson-modal"),
   lessonIntro: $("#lesson-intro"),
   lessonText: $("#lesson-text"),
@@ -605,8 +633,12 @@ function startWorld(worldIndex = state.unlockedWorld) {
   }
   session = {
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
-    correctCount: 0, errors: [], eliminatedAnswers: {}, reviewIndex: 0, timer: null, timeLeft: 20,
-    questions: shuffleQuestions(worlds[worldIndex].questions)
+    correctCount: 0, errors: [], boardPosition: 0, lastRoll: null,
+    wordDrafts: {}, wordRacks: {}, reviewIndex: 0, timer: null, timeLeft: 20,
+    questions: shuffleQuestions(worlds[worldIndex].questions.map((question, index) => ({
+      ...question,
+      keyword: worldKeywords[worldIndex][index]
+    })))
   };
   unlockAudio();
   persistActiveSession();
@@ -643,6 +675,7 @@ function renderQuestion() {
   elements.sessionScore.textContent = session.score;
   elements.sessionStreak.textContent = session.streak;
   updateMissionGoal();
+  renderAdventureBoard();
   const remaining = Math.max(0, 4 - session.correctCount);
   elements.guide.textContent = session.streak >= 3
       ? "Impressionnant ! Une réponse de plus peut consolider ta victoire."
@@ -650,19 +683,21 @@ function renderQuestion() {
         ? "Belle série ! Garde ce rythme, tu te rapproches rapidement des 80 %."
         : remaining <= 2
           ? `Plus que ${remaining} bonne${remaining > 1 ? "s" : ""} réponse${remaining > 1 ? "s" : ""} pour atteindre l’objectif.`
-          : "Tu as 20 secondes. Commence par éliminer les réponses les moins logiques.";
+          : isWordMission(missionMode)
+            ? "Lis l’indice, observe les lettres révélées et construis le terme technique."
+            : "Tu as 20 secondes. Analyse la situation avant d’agir.";
 
   elements.questionFeedback.hidden = true;
-  elements.answers.hidden = false;
+  elements.wordGame.hidden = !isWordMission(missionMode);
+  elements.answers.hidden = isWordMission(missionMode);
   elements.answers.className = `answers mode-${missionMode.key}`;
   elements.answers.innerHTML = question.answers.map((answer, index) => `
-    <button class="answer-button ${session.eliminatedAnswers?.[session.questionIndex]?.includes(index) ? "eliminated" : ""}"
-      data-answer="${index}" ${session.eliminatedAnswers?.[session.questionIndex]?.includes(index) ? "disabled" : ""}>
+    <button class="answer-button" data-answer="${index}">
       <span class="answer-key">${String.fromCharCode(65 + index)}</span>
       <span class="answer-content"><small>${missionMode.optionLabel} ${String.fromCharCode(65 + index)}</small>${answer}</span>
     </button>
   `).join("");
-  updateEliminationBrief();
+  if (isWordMission(missionMode)) renderWordGame();
 }
 
 function getMissionMode() {
@@ -673,14 +708,167 @@ function getKnowledgeSource(worldIndex = session.worldIndex) {
   return knowledgeSources[worldIndex] || knowledgeSources[0];
 }
 
-function updateEliminationBrief() {
-  const missionMode = getMissionMode();
-  if (missionMode.key !== "anomaly") return;
-  const eliminated = session.eliminatedAnswers?.[session.questionIndex]?.length || 0;
-  const remaining = 3 - eliminated;
-  elements.missionBriefText.textContent = remaining > 0
-    ? `Élimine encore ${remaining} faux signal${remaining > 1 ? "aux" : ""}. Attention : le bon signal ne doit pas être supprimé.`
-    : "Tous les faux signaux ont été neutralisés.";
+function isWordMission(mode = getMissionMode()) {
+  return mode.key === "crossword" || mode.key === "tiles";
+}
+
+function normalizeWord(word) {
+  return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/gi, "").toUpperCase();
+}
+
+function shuffleLetters(letters) {
+  const shuffled = [...letters];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function getLetterScore(letter) {
+  if ("AEILNORSTU".includes(letter)) return 1;
+  if ("DMG".includes(letter)) return 2;
+  if ("BCP".includes(letter)) return 3;
+  if ("FHV".includes(letter)) return 4;
+  if ("JQ".includes(letter)) return 8;
+  return 10;
+}
+
+function getFixedWordPositions(target, mode) {
+  if (mode.key !== "crossword") return [];
+  return [...target].map((_, index) => index).filter((index) => index % 3 === 0);
+}
+
+function ensureWordRack() {
+  session.wordDrafts ||= {};
+  session.wordRacks ||= {};
+  const key = session.questionIndex;
+  if (!session.wordRacks[key]) {
+    const target = normalizeWord(currentQuestion().keyword);
+    const mode = getMissionMode();
+    const fixedPositions = getFixedWordPositions(target, mode);
+    const playableLetters = [...target].filter((_, index) => !fixedPositions.includes(index));
+    const decoys = shuffleLetters("ABCDEFGHIJKLMNOPQRSTUVWXYZ").slice(0, Math.min(2, playableLetters.length));
+    session.wordRacks[key] = shuffleLetters([...playableLetters, ...decoys]);
+    session.wordDrafts[key] = [];
+    persistActiveSession();
+  }
+}
+
+function renderWordGame(reveal = false, incorrect = false) {
+  ensureWordRack();
+  const mode = getMissionMode();
+  const target = normalizeWord(currentQuestion().keyword);
+  const rack = session.wordRacks[session.questionIndex];
+  const draft = session.wordDrafts[session.questionIndex] || [];
+  const fixedPositions = getFixedWordPositions(target, mode);
+  let draftCursor = 0;
+
+  elements.wordGame.className = `word-game ${mode.key}${reveal ? " revealed" : ""}${incorrect ? " incorrect" : ""}`;
+  elements.wordGameLabel.textContent = mode.key === "crossword" ? "MOT CROISÉ IA" : "CHEVALET IA";
+  elements.wordGameHint.textContent = mode.key === "crossword"
+    ? "Les cases cyan sont des lettres croisées déjà trouvées"
+    : "Place les tuiles dans le bon ordre";
+  elements.wordGameLength.textContent = `${target.length} LETTRES`;
+  elements.wordSlots.innerHTML = [...target].map((letter, position) => {
+    if (fixedPositions.includes(position)) {
+      return `<button class="word-slot fixed" type="button" disabled><span>${letter}</span></button>`;
+    }
+    const draftIndex = draftCursor;
+    const rackIndex = draft[draftCursor];
+    const displayedLetter = reveal ? letter : rackIndex === undefined ? "" : rack[rackIndex];
+    draftCursor += 1;
+    return `<button class="word-slot ${displayedLetter ? "filled" : ""}" type="button"
+      data-draft-index="${draftIndex}" ${reveal || rackIndex === undefined ? "disabled" : ""}>
+      <span>${displayedLetter}</span>
+    </button>`;
+  }).join("");
+  elements.letterRack.innerHTML = rack.map((letter, index) => `
+    <button class="letter-tile" type="button" data-letter-index="${index}"
+      ${reveal || draft.includes(index) ? "disabled" : ""}>
+      <strong>${letter}</strong><small>${getLetterScore(letter)}</small>
+    </button>
+  `).join("");
+  const requiredLetters = target.length - fixedPositions.length;
+  elements.validateWord.disabled = reveal || draft.length !== requiredLetters;
+  elements.clearWord.disabled = reveal || draft.length === 0;
+}
+
+function selectLetter(letterIndex) {
+  if (session.answered) return;
+  ensureWordRack();
+  const target = normalizeWord(currentQuestion().keyword);
+  const fixedCount = getFixedWordPositions(target, getMissionMode()).length;
+  const draft = session.wordDrafts[session.questionIndex];
+  if (draft.includes(letterIndex) || draft.length >= target.length - fixedCount) return;
+  draft.push(letterIndex);
+  playSound("tile");
+  persistActiveSession();
+  renderWordGame();
+}
+
+function removeLetter(draftIndex) {
+  if (session.answered) return;
+  const draft = session.wordDrafts?.[session.questionIndex];
+  if (!draft || draftIndex < 0 || draftIndex >= draft.length) return;
+  draft.splice(draftIndex, 1);
+  playSound("tile");
+  persistActiveSession();
+  renderWordGame();
+}
+
+function clearWordDraft() {
+  if (session.answered) return;
+  session.wordDrafts[session.questionIndex] = [];
+  playSound("tile");
+  persistActiveSession();
+  renderWordGame();
+}
+
+function submitWord() {
+  if (session.answered) return;
+  const target = normalizeWord(currentQuestion().keyword);
+  const mode = getMissionMode();
+  const fixedPositions = getFixedWordPositions(target, mode);
+  const rack = session.wordRacks[session.questionIndex];
+  const draft = session.wordDrafts[session.questionIndex] || [];
+  let draftCursor = 0;
+  const attempt = [...target].map((letter, position) => {
+    if (fixedPositions.includes(position)) return letter;
+    const rackIndex = draft[draftCursor];
+    draftCursor += 1;
+    return rack[rackIndex] || "";
+  }).join("");
+  answerQuestion(attempt === target ? currentQuestion().correct : null, false, attempt !== target);
+}
+
+function renderAdventureBoard() {
+  session.boardPosition ??= 0;
+  const finish = 14;
+  elements.boardTrack.innerHTML = Array.from({ length: finish + 1 }, (_, index) => {
+    const special = index === 0 ? "start" : index === finish ? "finish" : index % 4 === 0 ? "bonus" : "";
+    const occupied = index === session.boardPosition;
+    return `<span class="board-cell ${special} ${occupied ? "occupied" : ""}">
+      ${occupied ? `<i aria-label="Ton pion">S</i>` : index === finish ? "★" : index === 0 ? "D" : ""}
+    </span>`;
+  }).join("");
+  elements.diceValue.textContent = session.lastRoll ?? "–";
+  elements.boardMessage.textContent = session.lastRoll
+    ? `Dé ${session.lastRoll} · ton pion avance vers le centre de l’IA.`
+    : "Réussis une mission pour lancer le dé.";
+}
+
+function moveBoardPawn(isCorrect) {
+  if (!isCorrect) {
+    session.lastRoll = 0;
+    renderAdventureBoard();
+    elements.boardMessage.textContent = "Le pion reste en place. Le débrief te donne une nouvelle chance.";
+    return;
+  }
+  const roll = 2 + Math.floor(Math.random() * 4);
+  session.lastRoll = roll;
+  session.boardPosition = Math.min(14, (session.boardPosition || 0) + roll);
+  renderAdventureBoard();
 }
 
 function updateMissionGoal() {
@@ -695,7 +883,7 @@ function updateMissionGoal() {
 
 function startTimer() {
   clearInterval(session.timer);
-  session.timeLeft = 20;
+  session.timeLeft = isWordMission() ? 35 : 20;
   lastTimerSound = null;
   updateTimer();
   session.timer = setInterval(() => {
@@ -735,7 +923,10 @@ function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
   });
 
   if (isCorrect) {
-    const earnedXp = 20 + Math.min(session.streak, 3) * 5;
+    const wordBonus = isWordMission()
+      ? Math.min(15, [...normalizeWord(question.keyword)].reduce((total, letter) => total + getLetterScore(letter), 0))
+      : 0;
+    const earnedXp = 20 + Math.min(session.streak, 3) * 5 + wordBonus;
     session.score += earnedXp;
     session.streak += 1;
     session.correctCount += 1;
@@ -746,7 +937,7 @@ function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
     updateMissionGoal();
     playSound("correct");
     showGameEffect("correct", session.streak >= 3 ? "Série brillante !" : "Bonne réponse !");
-    showToast(`Mission validée · +${earnedXp} XP`, "success");
+    showToast(`${isWordMission() ? "Mot validé" : "Mission validée"} · +${earnedXp} XP`, "success");
     saveState();
     renderDashboard();
   } else {
@@ -765,6 +956,8 @@ function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
     saveState();
     renderDashboard();
   }
+  moveBoardPawn(isCorrect);
+  if (isWordMission()) renderWordGame(true, !isCorrect);
   showQuestionFeedback(isCorrect, timedOut, forceIncorrect);
   persistActiveSession({
     status: "feedback",
@@ -773,42 +966,24 @@ function answerQuestion(answerIndex, timedOut = false, forceIncorrect = false) {
   });
 }
 
-function eliminateAnswer(answerIndex) {
-  if (session.answered) return;
-  const question = currentQuestion();
-  if (answerIndex === question.correct) {
-    answerQuestion(answerIndex, false, true);
-    return;
-  }
-  session.eliminatedAnswers ||= {};
-  const eliminated = session.eliminatedAnswers[session.questionIndex] || [];
-  if (eliminated.includes(answerIndex)) return;
-  eliminated.push(answerIndex);
-  session.eliminatedAnswers[session.questionIndex] = eliminated;
-  const button = elements.answers.querySelector(`[data-answer="${answerIndex}"]`);
-  button.disabled = true;
-  button.classList.add("eliminated");
-  playSound("eliminate");
-  showToast(`Faux signal neutralisé · ${eliminated.length} / 3`, "success");
-  updateEliminationBrief();
-  persistActiveSession();
-  if (eliminated.length === 3) {
-    setTimeout(() => answerQuestion(question.correct), 350);
-  }
-}
-
 function showQuestionFeedback(isCorrect, timedOut, forceIncorrect = false) {
   const question = currentQuestion();
   const source = getKnowledgeSource();
-  elements.answers.hidden = false;
+  const wordMission = isWordMission();
+  elements.answers.hidden = wordMission;
+  elements.wordGame.hidden = !wordMission;
   elements.questionFeedback.hidden = false;
   elements.questionFeedback.classList.toggle("incorrect", !isCorrect);
   elements.feedbackIcon.textContent = isCorrect ? "✓" : timedOut ? "◷" : "!";
   elements.feedbackLabel.textContent = isCorrect ? "ANALYSE VALIDÉE" : "DÉBRIEF DE MISSION";
   elements.feedbackTitle.textContent = isCorrect
-    ? "Décision techniquement solide"
+    ? wordMission
+      ? `Mot maîtrisé : ${normalizeWord(question.keyword)}`
+      : "Décision techniquement solide"
     : forceIncorrect
-      ? "Tu as éliminé le signal fiable"
+      ? wordMission
+        ? `Le mot attendu était ${normalizeWord(question.keyword)}`
+        : "Cette décision n’était pas la plus fiable"
       : timedOut
         ? "Le temps a expiré"
         : "Cette option pouvait induire en erreur";
@@ -1017,6 +1192,15 @@ function resumeActiveSession() {
     timer: null,
     timeLeft: 20
   };
+  session.boardPosition ??= 0;
+  session.lastRoll ??= null;
+  session.wordDrafts ||= {};
+  session.wordRacks ||= {};
+  session.questions = session.questions.map((question) => {
+    if (question.keyword) return question;
+    const originalIndex = worlds[session.worldIndex].questions.findIndex((item) => item.question === question.question);
+    return { ...question, keyword: worldKeywords[session.worldIndex][Math.max(0, originalIndex)] };
+  });
   unlockAudio();
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
@@ -1037,6 +1221,7 @@ function resumeActiveSession() {
       if (index === question.correct && !destroyedCorrectSignal) button.classList.add("correct");
       if (index === currentError?.selectedAnswer && !lastFeedback.isCorrect) button.classList.add("wrong");
     });
+    if (isWordMission()) renderWordGame(true, !lastFeedback.isCorrect);
     showQuestionFeedback(lastFeedback.isCorrect, lastFeedback.timedOut, lastFeedback.forceIncorrect);
     persistActiveSession({ status: "feedback", answered: true, lastFeedback });
   } else {
@@ -1056,7 +1241,7 @@ function openWelcome() {
     const questionNumber = Math.min(saved.questionIndex + 1, saved.questions.length);
     $("#resume-title").textContent = saved.status === "result"
       ? `Monde ${saved.worldIndex + 1} · Résultat à consulter`
-      : `Monde ${saved.worldIndex + 1} · ${world.title} · Question ${questionNumber} sur ${saved.questions.length}`;
+      : `Monde ${saved.worldIndex + 1} · ${world.title} · Mission ${questionNumber} sur ${saved.questions.length}`;
   }
   $("#welcome-action").innerHTML = canResume
     ? `Reprendre ma partie <span>→</span>`
@@ -1294,6 +1479,7 @@ function playSound(type) {
   const now = context.currentTime;
   const melodies = {
     missionStart: [[196, 0, .1, .055, "sine"], [294, .1, .16, .06, "sine"]],
+    tile: [[420, 0, .045, .025, "sine"], [520, .04, .05, .02, "sine"]],
     correct: [[523, 0, .12, .08], [659, .1, .14, .075], [784, .2, .18, .07]],
     wrong: [[220, 0, .16, .07, "triangle"], [165, .13, .24, .065, "triangle"]],
     eliminate: [[330, 0, .08, .045, "square"], [220, .07, .12, .04, "sine"]],
@@ -1342,12 +1528,18 @@ elements.worlds.addEventListener("keydown", (event) => {
 elements.answers.addEventListener("click", (event) => {
   const button = event.target.closest(".answer-button");
   if (!button) return;
-  if (getMissionMode().key === "anomaly") {
-    eliminateAnswer(Number(button.dataset.answer));
-  } else {
-    answerQuestion(Number(button.dataset.answer));
-  }
+  answerQuestion(Number(button.dataset.answer));
 });
+elements.letterRack.addEventListener("click", (event) => {
+  const tile = event.target.closest(".letter-tile");
+  if (tile) selectLetter(Number(tile.dataset.letterIndex));
+});
+elements.wordSlots.addEventListener("click", (event) => {
+  const slot = event.target.closest("[data-draft-index]");
+  if (slot) removeLetter(Number(slot.dataset.draftIndex));
+});
+elements.clearWord.addEventListener("click", clearWordDraft);
+elements.validateWord.addEventListener("click", submitWord);
 elements.feedbackContinue.addEventListener("click", () => {
   if (elements.feedbackContinue.disabled) return;
   elements.feedbackContinue.disabled = true;
@@ -1365,13 +1557,17 @@ document.addEventListener("keydown", (event) => {
     || elements.profileModal.classList.contains("visible")
     || elements.infoModal.classList.contains("visible")
   ) return;
+  if (elements.game.classList.contains("visible") && isWordMission()) {
+    if (event.key === "Backspace") {
+      const draft = session.wordDrafts?.[session.questionIndex] || [];
+      removeLetter(draft.length - 1);
+    }
+    if (event.key === "Enter" && !elements.validateWord.disabled) submitWord();
+    return;
+  }
   if (elements.game.classList.contains("visible") && ["1", "2", "3", "4"].includes(event.key)) {
     const answerIndex = Number(event.key) - 1;
-    if (getMissionMode().key === "anomaly") {
-      eliminateAnswer(answerIndex);
-    } else {
-      answerQuestion(answerIndex);
-    }
+    answerQuestion(answerIndex);
   }
   if (event.key === "Escape" && elements.game.classList.contains("visible")) closeGame();
 });

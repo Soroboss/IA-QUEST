@@ -339,8 +339,56 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .mission-brief.decision .mission-brief-icon, .mission-brief.decision small { color: var(--yellow); }
 .mission-brief.incident { border-color: rgba(255,100,127,.24); background: rgba(255,100,127,.045); }
 .mission-brief.incident .mission-brief-icon, .mission-brief.incident small { color: var(--red); }
+.mission-brief.crossword { border-color: rgba(75,243,162,.25); background: rgba(75,243,162,.045); }
+.mission-brief.crossword .mission-brief-icon, .mission-brief.crossword small { color: var(--green); }
+.mission-brief.tiles { border-color: rgba(255,220,93,.25); background: rgba(255,220,93,.045); }
+.mission-brief.tiles .mission-brief-icon, .mission-brief.tiles small { color: var(--yellow); }
 .question-topic { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .18em; margin: 25px 0 10px; }
 .quiz-card h2 { font-size: clamp(25px, 3vw, 38px); line-height: 1.25; margin: 0 0 32px; max-width: 720px; }
+.word-game {
+  margin-bottom: 18px; padding: 20px; border: 1px solid rgba(255,220,93,.22); border-radius: 15px;
+  background: radial-gradient(circle at top right, rgba(255,220,93,.08), transparent 45%), rgba(4,18,38,.75);
+}
+.word-game.crossword { border-color: rgba(75,243,162,.24); background: radial-gradient(circle at top right, rgba(75,243,162,.08), transparent 45%), rgba(4,18,38,.75); }
+.word-game-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
+.word-game-heading small { display: block; color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .15em; }
+.crossword .word-game-heading small { color: var(--green); }
+.word-game-heading strong { display: block; margin-top: 4px; color: #b9c8d9; font-size: 12px; }
+.word-game-heading > span {
+  flex: 0 0 auto; padding: 5px 8px; border-radius: 20px; color: var(--muted);
+  background: rgba(255,255,255,.045); font-size: 8px; font-weight: 800; letter-spacing: .1em;
+}
+.word-slots {
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 24px 0 20px;
+}
+.word-slot {
+  width: clamp(31px, 4.1vw, 42px); aspect-ratio: 1; padding: 0; border: 1px solid rgba(153,184,219,.25);
+  border-radius: 7px; display: grid; place-items: center; color: white; background: #0a213d;
+  font: 700 clamp(15px, 2vw, 20px) "Space Grotesk"; box-shadow: inset 0 -3px rgba(0,0,0,.18);
+}
+.word-slot.filled { border-color: rgba(255,220,93,.55); background: rgba(255,220,93,.1); }
+.word-slot.fixed { border-color: rgba(75,243,162,.48); color: var(--green); background: rgba(75,243,162,.11); }
+.word-game.revealed .word-slot { border-color: rgba(75,243,162,.5); color: var(--green); background: rgba(75,243,162,.1); }
+.word-game.revealed.incorrect .word-slot { border-color: rgba(255,100,127,.5); color: #ffd8df; background: rgba(255,100,127,.1); }
+.letter-rack {
+  min-height: 64px; padding: 9px; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 7px;
+  border-radius: 10px; background: linear-gradient(180deg, #183755, #0b233e);
+  box-shadow: inset 0 -5px rgba(0,0,0,.2);
+}
+.letter-tile {
+  position: relative; width: 43px; height: 47px; padding: 0; border: 1px solid #e9d59b; border-radius: 6px;
+  color: #172033; background: linear-gradient(145deg, #fff2c5, #d9bd75); box-shadow: 0 3px 0 #92753c;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.letter-tile:hover:not(:disabled) { transform: translateY(-3px) rotate(-1deg); }
+.letter-tile strong { font: 800 21px "Space Grotesk"; }
+.letter-tile small { position: absolute; right: 4px; bottom: 2px; font: 700 8px "DM Sans"; }
+.letter-tile:disabled { opacity: .18; transform: translateY(3px); }
+.word-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 15px; }
+.word-actions button { min-height: 44px; }
+.secondary-button {
+  padding: 0 16px; border: 1px solid var(--line); border-radius: 9px; color: #aebed0; background: transparent;
+}
 .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .answer-button {
   min-height: 74px; border: 1px solid rgba(149,181,218,.18); border-radius: 11px; background: #0c2443;
@@ -399,6 +447,32 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .mini-bot-face i:last-child { right: 15px; }
 .guide-name { color: var(--cyan); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
 .mission-panel blockquote { margin: 18px 0 28px; color: #aebdd0; font-size: 14px; line-height: 1.7; }
+.adventure-board {
+  margin-bottom: 18px; padding: 14px; border: 1px solid rgba(24,217,218,.15); border-radius: 12px;
+  background: linear-gradient(145deg, rgba(24,217,218,.055), rgba(3,16,34,.25)); text-align: left;
+}
+.board-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.board-heading > span { color: var(--cyan); font-size: 8px; font-weight: 800; letter-spacing: .13em; }
+.board-heading strong { color: white; font: 700 15px "Space Grotesk"; }
+.board-track {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 12px 0;
+}
+.board-cell {
+  position: relative; aspect-ratio: 1; border: 1px solid rgba(153,184,219,.16); border-radius: 6px;
+  display: grid; place-items: center; color: #607a96; background: #0a203b; font: 700 8px "Space Grotesk";
+}
+.board-cell:nth-child(n+6):nth-child(-n+10) { transform: translateX(0); }
+.board-cell.start { color: var(--cyan); border-color: rgba(24,217,218,.35); }
+.board-cell.bonus { background: rgba(255,220,93,.07); border-color: rgba(255,220,93,.28); }
+.board-cell.finish { color: var(--yellow); border-color: rgba(255,220,93,.45); }
+.board-cell.occupied { z-index: 1; border-color: var(--cyan); box-shadow: 0 0 14px rgba(24,217,218,.26); }
+.board-cell i {
+  width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50% 50% 45% 45%;
+  color: #032128; background: var(--cyan); box-shadow: 0 3px 0 #087d91, 0 0 13px rgba(24,217,218,.5);
+  font: normal 800 10px "Space Grotesk"; animation: pawnLand .35s ease;
+}
+@keyframes pawnLand { 50% { transform: translateY(-7px) scale(1.08); } }
+.adventure-board > p { margin: 0; color: #8197af; font-size: 9px; line-height: 1.4; }
 .mission-goal { margin: 0 0 20px; padding: 15px; border-radius: 12px; background: rgba(24,217,218,.055); text-align: left; }
 .goal-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .goal-heading span { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
@@ -663,6 +737,16 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .difficulty { padding: 6px 9px; font-size: 8px; }
   .question-topic { margin: 17px 0 8px; }
   .quiz-card h2 { margin-bottom: 22px; font-size: clamp(23px, 7vw, 30px); line-height: 1.28; }
+  .word-game { padding: 15px 11px; }
+  .word-game-heading { align-items: center; }
+  .word-game-heading strong { max-width: 220px; font-size: 10px; }
+  .word-slots { gap: 4px; margin: 19px 0 16px; }
+  .word-slot { width: clamp(27px, 8.2vw, 36px); border-radius: 6px; font-size: 15px; }
+  .letter-rack { min-height: 58px; padding: 8px 5px; gap: 5px; }
+  .letter-tile { width: 38px; height: 42px; }
+  .letter-tile strong { font-size: 19px; }
+  .word-actions { display: grid; grid-template-columns: .75fr 1.25fr; }
+  .word-actions button { width: 100%; padding-inline: 9px; font-size: 12px; }
   .answers { grid-template-columns: 1fr; }
   .answer-button { min-height: 64px; padding: 12px 13px; font-size: 14px; line-height: 1.4; }
   .answer-button:active, .primary-button:active, .next-mission:active { transform: scale(.985); }
@@ -682,8 +766,12 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .mini-bot-face i:last-child { right: 10px; }
   .guide-name { display: block; grid-column: 2; grid-row: 1; margin: 2px 0 -7px; }
   .mission-panel blockquote { grid-column: 2; grid-row: 2; margin: 0; font-size: 12px; line-height: 1.45; }
-  .mission-goal { grid-column: 1 / -1; grid-row: 3; margin: 1px 0 0; padding: 12px; }
-  .session-stats { grid-column: 1 / -1; grid-row: 4; display: grid; padding-top: 12px; }
+  .adventure-board { grid-column: 1 / -1; grid-row: 3; margin: 1px 0 0; padding: 12px; }
+  .board-track { grid-template-columns: repeat(8, 1fr); gap: 4px; }
+  .board-cell { min-width: 0; }
+  .board-cell i { width: 21px; height: 21px; }
+  .mission-goal { grid-column: 1 / -1; grid-row: 4; margin: 1px 0 0; padding: 12px; }
+  .session-stats { grid-column: 1 / -1; grid-row: 5; display: grid; padding-top: 12px; }
   .session-stats strong { font-size: 18px; }
   .modal-backdrop {
     align-items: flex-end; padding: 0; overflow: hidden;
