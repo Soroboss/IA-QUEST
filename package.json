@@ -12,6 +12,6 @@
     "@insforge/sdk": "^1.3.0"
   },
   "devDependencies": {
-    "vite": "^7.0.0"
+    "vite": "^8.0.16"
   }
 }

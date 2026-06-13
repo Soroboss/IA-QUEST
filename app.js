@@ -469,6 +469,9 @@ const knowledgeSources = [
 
 const PASS_THRESHOLD = 0.8;
 const BOARD_FINISH = 16;
+const AUTH_ATTEMPT_KEY = "iaQuestAuthAttempts";
+const AUTH_WINDOW_MS = 5 * 60 * 1000;
+const AUTH_MAX_ATTEMPTS = 5;
 const worldSkills = [
   "Comprendre les fondations de l’IA",
   "Raisonner sur les données et l’apprentissage",
@@ -764,6 +767,38 @@ function saveState() {
       });
     }, 450);
   }
+}
+
+function getRecentAuthAttempts() {
+  try {
+    const cutoff = Date.now() - AUTH_WINDOW_MS;
+    return JSON.parse(sessionStorage.getItem(AUTH_ATTEMPT_KEY) || "[]")
+      .filter((timestamp) => Number(timestamp) > cutoff);
+  } catch {
+    return [];
+  }
+}
+
+function getAuthCooldownSeconds() {
+  const attempts = getRecentAuthAttempts();
+  if (attempts.length < AUTH_MAX_ATTEMPTS) return 0;
+  return Math.max(1, Math.ceil((attempts[0] + AUTH_WINDOW_MS - Date.now()) / 1000));
+}
+
+function recordAuthFailure() {
+  const attempts = [...getRecentAuthAttempts(), Date.now()].slice(-AUTH_MAX_ATTEMPTS);
+  sessionStorage.setItem(AUTH_ATTEMPT_KEY, JSON.stringify(attempts));
+}
+
+function clearAuthFailures() {
+  sessionStorage.removeItem(AUTH_ATTEMPT_KEY);
+}
+
+function isStrongPassword(password) {
+  return password.length >= 10
+    && /[a-z]/.test(password)
+    && /[A-Z]/.test(password)
+    && /\d/.test(password);
 }
 
 function applyRemoteState(user, player, progress) {
@@ -1767,8 +1802,10 @@ function setAuthMode(mode) {
   $("#identifier-field").classList.toggle("full-field", isLogin);
   $("#register-password").closest("label").classList.toggle("full-field", true);
   $("#register-password").autocomplete = isLogin ? "current-password" : "new-password";
-  $("#register-password").minLength = isLogin ? 1 : 8;
-  $("#register-password").placeholder = isLogin ? "Ton mot de passe" : "8 caractères minimum";
+  $("#register-password").minLength = isLogin ? 1 : 10;
+  $("#register-password").placeholder = isLogin
+    ? "Ton mot de passe"
+    : "10 caractères, avec majuscule, minuscule et chiffre";
   $("#register-title").textContent = isLogin ? "Reprendre mon aventure" : "Bienvenue dans IA Quest";
   $("#register-submit").innerHTML = isLogin
     ? `Se connecter <span>→</span>`
@@ -1792,6 +1829,9 @@ function closeVerification() {
 }
 
 async function finishAuthenticatedPlayer(user, playerData = null) {
+  if (user.emailVerified === false) {
+    throw new Error("Ton adresse email doit être vérifiée avant la connexion.");
+  }
   let { player, progress } = await loadRemotePlayer(user.id);
   if (!player && playerData) {
     await createRemotePlayer(user, playerData);
@@ -2102,14 +2142,24 @@ $("#close-info").addEventListener("click", () => {
 elements.registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!elements.registerForm.reportValidity()) return;
+  const cooldown = getAuthCooldownSeconds();
+  if (cooldown > 0) {
+    showToast(`Trop de tentatives. Réessaie dans ${cooldown} seconde${cooldown > 1 ? "s" : ""}.`, "error");
+    return;
+  }
   const submitButton = $("#register-submit");
-  submitButton.disabled = true;
   const identifier = $("#register-email").value.trim();
   const email = identifier.toLowerCase();
   const password = $("#register-password").value;
+  if (authMode === "register" && !isStrongPassword(password)) {
+    showToast("Choisis au moins 10 caractères avec une majuscule, une minuscule et un chiffre.", "error");
+    return;
+  }
+  submitButton.disabled = true;
   try {
     if (authMode === "login") {
       const data = await signInAccount(identifier, password);
+      clearAuthFailures();
       await finishAuthenticatedPlayer(data.user);
       return;
     }
@@ -2129,9 +2179,11 @@ elements.registerForm.addEventListener("submit", async (event) => {
     if (data?.requireEmailVerification) {
       openVerification(email);
     } else if (data?.user) {
+      clearAuthFailures();
       await finishAuthenticatedPlayer(data.user, pendingRegistration);
     }
   } catch (error) {
+    recordAuthFailure();
     showToast(getFriendlyAuthError(error, authMode === "login" ? "login" : "signup"), "error");
   } finally {
     submitButton.disabled = false;

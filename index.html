@@ -3,11 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <script>
-    if (window.location.protocol === "file:") {
-      window.location.replace("https://fs742zac.insforge.site");
-    }
-  </script>
   <meta name="theme-color" content="#07152e">
   <meta name="description" content="IA Quest, un jeu éducatif adaptatif pour comprendre l'intelligence artificielle.">
   <title>IA Quest - Apprends. Joue. Progresse.</title>
@@ -336,11 +331,11 @@
       <p class="lesson-intro" id="auth-intro">Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.</p>
       <form id="register-form">
         <div class="form-grid">
-          <label><span>Prénom</span><input id="register-firstname" name="firstname" type="text" autocomplete="given-name" required minlength="2" placeholder="Ex. Aïcha"></label>
-          <label><span>Nom</span><input id="register-lastname" name="lastname" type="text" autocomplete="family-name" required minlength="2" placeholder="Ex. Koné"></label>
-          <label><span>Numéro WhatsApp</span><input id="register-phone" name="phone" type="tel" autocomplete="tel" required pattern="[+0-9 ()-]{8,20}" placeholder="Ex. +225 07 00 00 00 00"></label>
-          <label id="identifier-field"><span id="identifier-label">Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="nom@exemple.com"></label>
-          <label class="full-field"><span>Mot de passe</span><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="8 caractères minimum"></label>
+          <label><span>Prénom</span><input id="register-firstname" name="firstname" type="text" autocomplete="given-name" required minlength="2" maxlength="80" placeholder="Ex. Aïcha"></label>
+          <label><span>Nom</span><input id="register-lastname" name="lastname" type="text" autocomplete="family-name" required minlength="2" maxlength="80" placeholder="Ex. Koné"></label>
+          <label><span>Numéro WhatsApp</span><input id="register-phone" name="phone" type="tel" autocomplete="tel" required minlength="8" maxlength="20" pattern="[+0-9 ()-]{8,20}" placeholder="Ex. +225 07 00 00 00 00"></label>
+          <label id="identifier-field"><span id="identifier-label">Adresse email</span><input id="register-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="nom@exemple.com"></label>
+          <label class="full-field"><span>Mot de passe</span><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="128" placeholder="10 caractères, avec majuscule, minuscule et chiffre"></label>
         </div>
         <label class="consent-field"><input id="register-consent" type="checkbox" required><span>J’accepte que mes coordonnées et ma progression soient enregistrées pour le fonctionnement du jeu.</span></label>
         <p class="privacy-note">Tes coordonnées servent uniquement à ton compte et à la synchronisation de ta progression.</p>

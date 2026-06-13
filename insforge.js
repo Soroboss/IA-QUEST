@@ -1,9 +1,7 @@
 import { createClient } from "@insforge/sdk";
 
-const baseUrl = import.meta.env.VITE_INSFORGE_URL
-  || "https://fs742zac.eu-central.insforge.app";
-const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY
-  || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3OC0xMjM0LTU2NzgtOTBhYi1jZGVmMTIzNDU2NzgiLCJlbWFpbCI6ImFub25AaW5zZm9yZ2UuY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODczNzR9.p5hlHKjBV8TxIgFDAeYocapjZVmZ6cJZ4dQt84bihoI";
+const baseUrl = import.meta.env.VITE_INSFORGE_URL;
+const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY;
 
 export const backendConfigured = Boolean(baseUrl && anonKey);
 
@@ -59,7 +57,12 @@ export function getFriendlyAuthError(error, context = "account") {
   if (code.includes("INVALID_CREDENTIALS") || status === 401 || message.includes("invalid login")) {
     return "Adresse email ou mot de passe incorrect.";
   }
-  if (status === 403 || code.includes("EMAIL_NOT_VERIFIED") || message.includes("not verified")) {
+  if (
+    status === 403
+    || code.includes("EMAIL_NOT_VERIFIED")
+    || message.includes("not verified")
+    || message.includes("vérifi")
+  ) {
     return "Ton adresse email doit être vérifiée avant la connexion.";
   }
   if (code.includes("USER_ALREADY_EXISTS") || status === 409 || message.includes("already")) {

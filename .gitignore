@@ -13,9 +13,8 @@
 .roo
 .trae
 .windsurf
-.env
-.env.local
-.env*.local
+.env*
+!.env.example
 node_modules
 dist
 skills-lock.json
