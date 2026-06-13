@@ -482,6 +482,135 @@ const worldSkills = [
   "Concevoir une solution IA utile et responsable"
 ];
 
+const careerDefaults = {
+  expertise: 50,
+  trust: 45,
+  ethics: 60,
+  budget: 40,
+  decisions: {},
+  projects: []
+};
+
+const careerLabels = {
+  expertise: "Expertise",
+  trust: "Confiance",
+  ethics: "Éthique",
+  budget: "Budget"
+};
+
+const careerEvents = [
+  {
+    client: "CLIENT · CENTRE DE FORMATION",
+    project: "Coach d’apprentissage",
+    title: "Faut-il vraiment utiliser l’IA ?",
+    situation: "Un centre veut ajouter de l’IA à sa plateforme, mais le besoin reste flou. Tu dois choisir comment lancer le projet.",
+    choices: [
+      { title: "Construire immédiatement un chatbot", detail: "Rapide et visible, sans étude préalable.", effects: { expertise: -4, trust: -5, budget: -3 }, consequence: "Le prototype impressionne, mais répond mal au vrai besoin.", lesson: "Un projet IA commence par un problème utilisateur mesurable, pas par une technologie à placer." },
+      { title: "Observer les apprenants et définir le besoin", detail: "Une semaine d’enquête avant de choisir la solution.", effects: { expertise: 6, trust: 5, budget: -2, ethics: 2 }, consequence: "Tu découvres que les apprenants ont surtout besoin d’explications personnalisées.", lesson: "Le cadrage évite de construire une solution coûteuse qui ne résout aucun problème réel.", recommended: true },
+      { title: "Acheter l’outil le moins cher", detail: "Le budget passe avant l’usage.", effects: { budget: 5, trust: -4, expertise: -2 }, consequence: "Le coût initial baisse, mais l’outil s’intègre mal au parcours.", lesson: "Le prix seul ne mesure ni l’utilité, ni la qualité, ni le coût futur d’une solution IA." }
+    ]
+  },
+  {
+    client: "CLIENT · COOPÉRATIVE AGRICOLE",
+    project: "Prévision des récoltes",
+    title: "Des données incomplètes",
+    situation: "La coopérative possède beaucoup de relevés, mais plusieurs villages et saisons sont peu représentés.",
+    choices: [
+      { title: "Entraîner avec toutes les données disponibles", detail: "Plus de volume, même si la qualité varie.", effects: { budget: 3, trust: -6, ethics: -4 }, consequence: "Les prédictions favorisent les zones les mieux documentées.", lesson: "Plus de données ne signifie pas automatiquement de meilleures données." },
+      { title: "Auditer, compléter et documenter les données", detail: "Le lancement sera plus lent mais contrôlé.", effects: { expertise: 6, trust: 5, ethics: 5, budget: -4 }, consequence: "Le modèle devient plus représentatif et ses limites sont connues.", lesson: "La couverture, la provenance et la qualité des données déterminent la fiabilité du modèle.", recommended: true },
+      { title: "Supprimer les villages difficiles", detail: "Le jeu de données devient plus propre.", effects: { expertise: 1, budget: 4, ethics: -8, trust: -5 }, consequence: "Les résultats semblent meilleurs, mais excluent les bénéficiaires les plus difficiles à servir.", lesson: "Nettoyer les données ne doit pas effacer silencieusement une partie de la population." }
+    ]
+  },
+  {
+    client: "CLIENT · ENTREPRISE DE LIVRAISON",
+    project: "Prévision des retards",
+    title: "Un modèle spectaculaire",
+    situation: "Deux modèles sont proposés: l’un est très précis mais opaque, l’autre légèrement moins précis et explicable.",
+    choices: [
+      { title: "Choisir uniquement la meilleure précision", detail: "L’équipe veut afficher le score maximal.", effects: { expertise: 2, trust: -5, ethics: -2, budget: -3 }, consequence: "Les agents contestent des alertes qu’ils ne peuvent pas comprendre.", lesson: "La meilleure métrique technique n’est pas toujours le meilleur choix opérationnel." },
+      { title: "Tester les deux modèles avec les agents", detail: "Comparer précision, erreurs et compréhension.", effects: { expertise: 7, trust: 5, ethics: 3, budget: -3 }, consequence: "L’équipe choisit un modèle assez précis et utilisable sur le terrain.", lesson: "Un bon modèle doit être évalué dans son contexte réel avec les personnes concernées.", recommended: true },
+      { title: "Laisser le fournisseur décider", detail: "Gagner du temps sur l’évaluation.", effects: { budget: 2, expertise: -5, trust: -3 }, consequence: "Le projet dépend d’affirmations commerciales difficiles à vérifier.", lesson: "Le responsable du projet doit comprendre les critères de sélection et demander des preuves." }
+    ]
+  },
+  {
+    client: "CLIENT · SERVICE DE RECRUTEMENT",
+    project: "Aide au tri des candidatures",
+    title: "Une décision sensible",
+    situation: "Le service souhaite que l’IA classe automatiquement les candidats et élimine les moins bien notés.",
+    choices: [
+      { title: "Automatiser entièrement le rejet", detail: "Le gain de temps est maximal.", effects: { budget: 6, trust: -8, ethics: -10 }, consequence: "Des profils pertinents sont rejetés sans recours ni explication.", lesson: "Une décision à fort impact ne doit pas être abandonnée à un score automatisé." },
+      { title: "Assister les recruteurs avec contrôle humain", detail: "L’IA suggère, l’humain décide et documente.", effects: { trust: 7, ethics: 8, expertise: 4, budget: -3 }, consequence: "Le tri accélère tout en gardant une responsabilité et un recours humains.", lesson: "L’humain dans la boucle est essentiel lorsque la décision affecte les droits ou les opportunités.", recommended: true },
+      { title: "Refuser toute utilisation de l’IA", detail: "Écarter entièrement le risque algorithmique.", effects: { ethics: 3, budget: -4, expertise: -2 }, consequence: "Les risques algorithmiques disparaissent, mais les biais humains existants ne sont pas étudiés.", lesson: "La prudence est utile, mais elle doit s’accompagner d’une analyse du processus complet." }
+    ]
+  },
+  {
+    client: "CLIENT · AGENCE DE COMMUNICATION",
+    project: "Assistant de création",
+    title: "Produire plus vite",
+    situation: "L’agence veut générer des campagnes entières avec une IA afin de réduire fortement les délais.",
+    choices: [
+      { title: "Publier directement les générations", detail: "Aucune vérification pour aller très vite.", effects: { budget: 7, trust: -8, ethics: -5 }, consequence: "Une fausse information apparaît dans une campagne publique.", lesson: "Une sortie générée n’est pas une source vérifiée et doit être relue avant publication." },
+      { title: "Créer un processus génération, vérification, validation", detail: "L’IA accélère le brouillon, l’équipe garde le contrôle.", effects: { expertise: 5, trust: 7, ethics: 5, budget: 2 }, consequence: "La production accélère sans sacrifier la responsabilité éditoriale.", lesson: "L’IA générative apporte le plus de valeur lorsqu’elle s’intègre à un processus de contrôle clair.", recommended: true },
+      { title: "Interdire tous les outils génératifs", detail: "Conserver exactement l’ancien processus.", effects: { trust: 2, budget: -5, expertise: -3 }, consequence: "La qualité reste stable, mais l’équipe ne développe aucune nouvelle compétence.", lesson: "Une interdiction totale peut éviter un risque immédiat sans préparer un usage futur responsable." }
+    ]
+  },
+  {
+    client: "CLIENT · CLINIQUE",
+    project: "Alerte de dépistage",
+    title: "Quelle erreur accepter ?",
+    situation: "Le modèle peut manquer certains cas malades ou déclencher davantage de fausses alertes.",
+    choices: [
+      { title: "Optimiser uniquement l’exactitude globale", detail: "Présenter le chiffre le plus simple.", effects: { expertise: -3, trust: -5, ethics: -5 }, consequence: "Le score paraît élevé alors que des cas rares importants sont manqués.", lesson: "Une métrique doit refléter le coût réel de chaque type d’erreur." },
+      { title: "Prioriser le rappel et organiser la vérification", detail: "Réduire les cas manqués, puis confirmer les alertes.", effects: { expertise: 7, trust: 6, ethics: 7, budget: -4 }, consequence: "Davantage de patients à risque sont détectés avec une seconde lecture humaine.", lesson: "Dans un dépistage, manquer un malade peut coûter plus cher qu’une alerte à vérifier.", recommended: true },
+      { title: "Demander zéro erreur au modèle", detail: "Bloquer le lancement jusqu’à la perfection.", effects: { trust: 1, budget: -7, expertise: -1 }, consequence: "Le projet s’arrête sur un objectif impossible à garantir.", lesson: "Aucun modèle réel n’est parfait; il faut gérer les erreurs, les seuils et les recours." }
+    ]
+  },
+  {
+    client: "CLIENT · MÉDIATHÈQUE",
+    project: "Recherche sémantique",
+    title: "Comprendre les demandes",
+    situation: "Les visiteurs décrivent leurs besoins avec des phrases très différentes des titres du catalogue.",
+    choices: [
+      { title: "Chercher seulement les mots identiques", detail: "Une solution simple et peu coûteuse.", effects: { budget: 5, expertise: -2, trust: -3 }, consequence: "Beaucoup de documents pertinents restent invisibles.", lesson: "Une recherche littérale échoue lorsque le sens est proche mais les mots sont différents." },
+      { title: "Tester des embeddings sur un échantillon", detail: "Comparer la recherche sémantique à la méthode actuelle.", effects: { expertise: 7, trust: 4, budget: -3 }, consequence: "Les utilisateurs retrouvent des contenus proches par leur sens.", lesson: "Les embeddings représentent des proximités sémantiques, mais doivent être évalués sur des requêtes réelles.", recommended: true },
+      { title: "Envoyer tout le catalogue à un chatbot public", detail: "Profiter d’un outil déjà disponible.", effects: { budget: 4, ethics: -6, trust: -6 }, consequence: "Des données internes sont transférées sans analyse de confidentialité.", lesson: "La facilité d’un outil ne remplace pas l’examen des données envoyées et des conditions d’usage." }
+    ]
+  },
+  {
+    client: "CLIENT · SUPPORT TECHNIQUE",
+    project: "Assistant documentaire",
+    title: "Des réponses qui vieillissent",
+    situation: "Le chatbot répond bien au lancement, mais les procédures internes changent chaque mois.",
+    choices: [
+      { title: "Réentraîner rarement un grand modèle", detail: "Une opération lourde chaque année.", effects: { budget: -7, expertise: 2, trust: -2 }, consequence: "Les réponses deviennent obsolètes entre deux entraînements.", lesson: "Réentraîner un modèle n’est pas toujours la meilleure manière d’actualiser des connaissances." },
+      { title: "Relier l’assistant à des documents vérifiés", detail: "Citer les sources et actualiser l’index.", effects: { expertise: 7, trust: 7, ethics: 3, budget: -2 }, consequence: "Les réponses s’appuient sur la documentation actuelle et indiquent leurs sources.", lesson: "Une architecture de recherche augmentée aide à ancrer les réponses dans des contenus contrôlés.", recommended: true },
+      { title: "Laisser les employés corriger mentalement", detail: "Ne rien changer au système.", effects: { budget: 5, trust: -7, expertise: -3 }, consequence: "Les erreurs se multiplient et personne ne sait quelle réponse croire.", lesson: "Un système non maintenu transfère le coût et le risque aux utilisateurs." }
+    ]
+  },
+  {
+    client: "CLIENT · FINTECH",
+    project: "Assistant de compte",
+    title: "Un prompt malveillant",
+    situation: "Un testeur réussit à faire révéler au chatbot une partie de ses instructions et des informations internes.",
+    choices: [
+      { title: "Cacher le problème jusqu’au lancement", detail: "Éviter de retarder la date annoncée.", effects: { budget: 4, trust: -10, ethics: -8 }, consequence: "La vulnérabilité reste exploitable et le risque augmente avec le nombre d’utilisateurs.", lesson: "Une faille connue doit être traitée, documentée et testée avant mise en production." },
+      { title: "Limiter les accès et organiser des tests offensifs", detail: "Séparer les données, filtrer les outils et surveiller.", effects: { expertise: 7, trust: 7, ethics: 6, budget: -5 }, consequence: "L’équipe réduit la portée d’une attaque et détecte les comportements suspects.", lesson: "La sécurité d’un système IA repose sur plusieurs contrôles, pas sur une consigne secrète dans le prompt.", recommended: true },
+      { title: "Ajouter seulement « ne révèle rien » au prompt", detail: "Une correction rapide en une phrase.", effects: { budget: 5, expertise: -5, trust: -5 }, consequence: "Une nouvelle formulation contourne immédiatement la consigne.", lesson: "Un prompt n’est pas une barrière de sécurité suffisante pour protéger des données ou des outils." }
+    ]
+  },
+  {
+    client: "CLIENT · RÉSEAU DE PME",
+    project: "Copilote métier",
+    title: "Passer du prototype au produit",
+    situation: "Le prototype plaît, mais il faut décider comment le déployer durablement auprès de plusieurs entreprises.",
+    choices: [
+      { title: "Lancer partout dès demain", detail: "Chercher rapidement un maximum d’utilisateurs.", effects: { budget: 6, trust: -6, ethics: -3, expertise: -2 }, consequence: "Les incidents arrivent avant que l’équipe sache les mesurer ou les corriger.", lesson: "Un prototype convaincant n’est pas encore un produit fiable." },
+      { title: "Déployer par étapes avec indicateurs et recours", detail: "Pilote, mesure de valeur, surveillance et amélioration.", effects: { expertise: 8, trust: 8, ethics: 6, budget: -4 }, consequence: "Chaque étape fournit des preuves et permet de corriger avant l’élargissement.", lesson: "Un déploiement progressif relie performance technique, valeur utilisateur et gestion des risques.", recommended: true },
+      { title: "Mesurer seulement le nombre de connexions", detail: "Un indicateur simple pour montrer la croissance.", effects: { budget: 3, trust: -3, expertise: -3 }, consequence: "Le tableau de bord progresse sans prouver que le copilote aide réellement les entreprises.", lesson: "L’usage ne suffit pas: il faut mesurer le résultat concret, les erreurs et la satisfaction." }
+    ]
+  }
+];
+
 const defaultState = {
   xp: 0,
   lives: 3,
@@ -493,7 +622,8 @@ const defaultState = {
   profileMilestones: [],
   activeSession: null,
   lastPracticeWorld: null,
-  userId: null
+  userId: null,
+  career: { ...careerDefaults }
 };
 
 let state = loadState();
@@ -518,7 +648,9 @@ let session = {
   wordHints: {},
   reviewIndex: 0,
   timer: null,
-  timeLeft: 60
+  timeLeft: 60,
+  decisionResolved: false,
+  eventChoice: null
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -590,6 +722,9 @@ const elements = {
   nextWorldPreview: $("#next-world-preview"),
   nextWorldTitle: $("#next-world-title"),
   nextWorldDescription: $("#next-world-description"),
+  careerEventModal: $("#career-event-modal"),
+  careerChoiceList: $("#career-choice-list"),
+  careerEventContinue: $("#career-event-continue"),
   registerModal: $("#register-modal"),
   registerForm: $("#register-form"),
   verifyModal: $("#verify-modal"),
@@ -603,9 +738,19 @@ const elements = {
 
 function loadState() {
   try {
-    return { ...defaultState, ...JSON.parse(localStorage.getItem("iaQuestState")) };
+    const saved = JSON.parse(localStorage.getItem("iaQuestState"));
+    return {
+      ...defaultState,
+      ...saved,
+      career: {
+        ...careerDefaults,
+        ...(saved?.career || {}),
+        decisions: { ...careerDefaults.decisions, ...(saved?.career?.decisions || {}) },
+        projects: Array.isArray(saved?.career?.projects) ? saved.career.projects : []
+      }
+    };
   } catch {
-    return { ...defaultState };
+    return { ...defaultState, career: { ...careerDefaults } };
   }
 }
 
@@ -639,7 +784,16 @@ function applyRemoteState(user, player, progress) {
     unlockedWorld: progress?.unlocked_world ?? 0,
     completedWorlds: progress?.completed_worlds ?? [],
     profileMilestones: progress?.profile_milestones ?? [],
-    activeSession: progress?.active_session ?? null
+    activeSession: progress?.active_session ?? null,
+    career: {
+      ...careerDefaults,
+      ...(progress?.simulation_state || state.career || {}),
+      decisions: {
+        ...careerDefaults.decisions,
+        ...(progress?.simulation_state?.decisions || state.career?.decisions || {})
+      },
+      projects: progress?.simulation_state?.projects || state.career?.projects || []
+    }
   };
   localStorage.setItem("iaQuestState", JSON.stringify(state));
 }
@@ -655,8 +809,8 @@ function renderDashboard() {
   elements.xp.textContent = `${state.xp % 100} XP`;
   elements.level.textContent = level;
   elements.levelProgress.style.width = `${state.xp % 100}%`;
-  elements.journeyStatus.textContent = `${chapterCompleted} / 5 mondes maîtrisés`;
-  $("#journey-title").textContent = advancedChapter ? "5 mondes experts inédits" : "5 mondes à explorer";
+  elements.journeyStatus.textContent = `${chapterCompleted} / 5 projets maîtrisés`;
+  $("#journey-title").textContent = advancedChapter ? "5 projets IA experts" : "5 projets IA à construire";
   $(".journey-section .eyebrow").innerHTML = advancedChapter
     ? `<span></span> PARCOURS AVANCÉ`
     : `<span></span> TON PARCOURS`;
@@ -665,6 +819,7 @@ function renderDashboard() {
   $("#player-name").textContent = state.player ? state.player.firstname : "Invité";
   $("#player-initials").textContent = state.player ? getInitials(state.player) : "?";
   $("#player-chip").setAttribute("aria-label", state.player ? `Voir le profil de ${state.player.firstname}` : "Voir mon profil");
+  renderCareerDashboard();
   $("#start-button").childNodes[0].textContent = state.player
     ? hasResumableSession()
       ? "Reprendre ma partie "
@@ -698,10 +853,133 @@ function renderDashboard() {
         <span class="world-number">${String(index + 1).padStart(2, "0")}</span>
         <span class="world-state">${status}</span>
         <div class="world-icon">${world.icon}</div>
+        <small class="world-project">${careerEvents[index].project}</small>
         <h3>${world.title}</h3>
         <p>${world.subtitle}</p>
       </article>`;
   }).join("");
+}
+
+function clampCareerValue(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function getCareerRole() {
+  const delivered = state.career.projects.length;
+  const balance = Math.min(
+    state.career.expertise,
+    state.career.trust,
+    state.career.ethics,
+    state.career.budget
+  );
+  if (delivered >= 10 && balance >= 45) return "Architecte de solutions IA responsables";
+  if (delivered >= 7) return "Directeur de projets IA";
+  if (delivered >= 4) return "Chef de projet IA";
+  if (delivered >= 1) return "Concepteur IA junior";
+  return "Apprenti chef de projet IA";
+}
+
+function renderCareerStats(container, compact = false) {
+  if (!container) return;
+  container.innerHTML = Object.entries(careerLabels).map(([key, label]) => `
+    <div class="career-stat${compact ? " compact" : ""}">
+      <span>${label}</span>
+      <strong>${state.career[key]}</strong>
+      <i><b style="width:${state.career[key]}%"></b></i>
+    </div>
+  `).join("");
+}
+
+function renderCareerDashboard() {
+  const dashboard = $("#career-dashboard");
+  dashboard.hidden = !state.player;
+  if (!state.player) return;
+  $("#career-role").textContent = getCareerRole();
+  const projectCount = state.career.projects.length;
+  $("#career-projects").textContent = `${projectCount} projet${projectCount > 1 ? "s" : ""} livré${projectCount > 1 ? "s" : ""}`;
+  Object.keys(careerLabels).forEach((key) => {
+    $(`#career-${key}`).textContent = state.career[key];
+    $(`#career-${key}-bar`).style.width = `${state.career[key]}%`;
+  });
+}
+
+function getCareerImpactMarkup(effects) {
+  return Object.entries(effects).map(([key, amount]) => `
+    <span class="${amount >= 0 ? "positive" : "negative"}">
+      ${careerLabels[key]} ${amount >= 0 ? "+" : ""}${amount}
+    </span>
+  `).join("");
+}
+
+function applyCareerEffects(effects) {
+  Object.entries(effects).forEach(([key, amount]) => {
+    state.career[key] = clampCareerValue(state.career[key] + amount);
+  });
+}
+
+function showCareerEvent() {
+  const careerEvent = careerEvents[session.worldIndex];
+  clearInterval(session.timer);
+  $("#career-event-icon").textContent = worlds[session.worldIndex].icon;
+  $("#career-event-client").textContent = careerEvent.client;
+  $("#career-event-title").textContent = careerEvent.title;
+  $("#career-event-situation").textContent = careerEvent.situation;
+  elements.careerChoiceList.hidden = false;
+  elements.careerChoiceList.innerHTML = careerEvent.choices.map((choice, index) => `
+    <button class="career-choice" type="button" data-choice="${index}">
+      <span>${index + 1}</span>
+      <div><strong>${choice.title}</strong><small>${choice.detail}</small></div>
+      <b>→</b>
+    </button>
+  `).join("");
+  $("#career-consequence").hidden = true;
+  elements.careerEventContinue.hidden = true;
+  elements.careerEventModal.classList.add("visible");
+  elements.careerEventModal.setAttribute("aria-hidden", "false");
+  persistActiveSession({ status: "decision" });
+}
+
+function chooseCareerStrategy(choiceIndex) {
+  if (session.decisionResolved) return;
+  const choice = careerEvents[session.worldIndex].choices[choiceIndex];
+  if (!choice) return;
+  session.decisionResolved = true;
+  session.eventChoice = choiceIndex;
+  applyCareerEffects(choice.effects);
+  state.career.decisions[session.worldIndex] = choiceIndex;
+  elements.careerChoiceList.hidden = true;
+  $("#career-consequence-label").textContent = choice.recommended
+    ? "DÉCISION SOLIDE"
+    : "CONSÉQUENCE À ANALYSER";
+  $("#career-consequence-title").textContent = choice.title;
+  $("#career-consequence-text").textContent = choice.consequence;
+  $("#career-impact-chips").innerHTML = getCareerImpactMarkup(choice.effects);
+  $("#career-decision-lesson").textContent = choice.lesson;
+  $("#career-consequence").hidden = false;
+  elements.careerEventContinue.hidden = false;
+  updateProjectStatus();
+  saveState();
+  renderDashboard();
+  persistActiveSession({ status: "decision-feedback" });
+  playSound(choice.recommended ? "correct" : "boardBonus");
+}
+
+function closeCareerEventAndPlay() {
+  elements.careerEventModal.classList.remove("visible");
+  elements.careerEventModal.setAttribute("aria-hidden", "true");
+  renderQuestion();
+}
+
+function updateProjectStatus() {
+  const careerEvent = careerEvents[session.worldIndex];
+  if (!careerEvent) return;
+  $("#project-name").textContent = careerEvent.project;
+  const choice = session.eventChoice === null || session.eventChoice === undefined
+    ? null
+    : careerEvent.choices[session.eventChoice];
+  $("#project-status-text").textContent = choice
+    ? `Stratégie : ${choice.title}`
+    : "Choisis une stratégie avant de démarrer les missions.";
 }
 
 function startWorld(worldIndex = state.unlockedWorld, { practice = false } = {}) {
@@ -718,6 +996,8 @@ function startWorld(worldIndex = state.unlockedWorld, { practice = false } = {})
     worldIndex, questionIndex: 0, score: 0, streak: 0, answered: false,
     correctCount: 0, errors: [], boardPosition: 0, lastRoll: null, practice,
     wordDrafts: {}, wordRacks: {}, wordHints: {}, reviewIndex: 0, timer: null, timeLeft: 60,
+    decisionResolved: practice || Boolean(state.career.decisions[worldIndex]),
+    eventChoice: state.career.decisions[worldIndex] ?? null,
     questions: shuffleQuestions(worlds[worldIndex].questions.map((question, index) => ({
       ...question,
       ...worldWordPuzzles[worldIndex][index]
@@ -728,7 +1008,12 @@ function startWorld(worldIndex = state.unlockedWorld, { practice = false } = {})
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  renderQuestion();
+  updateProjectStatus();
+  if (session.decisionResolved) {
+    renderQuestion();
+  } else {
+    showCareerEvent();
+  }
 }
 
 function currentQuestion() {
@@ -757,6 +1042,7 @@ function renderQuestion() {
   elements.question.textContent = isWordMission(missionMode) ? question.clue : question.question;
   elements.sessionScore.textContent = session.score;
   elements.sessionStreak.textContent = session.streak;
+  updateProjectStatus();
   updateMissionGoal();
   renderAdventureBoard();
   const remaining = Math.max(0, 4 - session.correctCount);
@@ -1235,6 +1521,9 @@ function showWorldResult({ recordAttempt = true } = {}) {
       ? "Compétence consolidée et XP conservée"
       : "+50 XP et accès au prochain monde"
     : `${session.errors.length} cours personnalisés pour réussir la prochaine tentative`;
+  $("#project-report-stats").innerHTML = Object.entries(careerLabels).map(([key, label]) => `
+    <div><span>${label}</span><strong>${state.career[key]}</strong></div>
+  `).join("");
   const nextWorld = worlds[session.worldIndex + 1];
   elements.nextWorldPreview.hidden = session.practice || !passed || !nextWorld;
   if (!session.practice && passed && nextWorld) {
@@ -1269,6 +1558,10 @@ function completeWorld(continuePlaying = false) {
   if (!state.completedWorlds.includes(worldIndex)) {
     state.completedWorlds.push(worldIndex);
     state.xp += 50;
+    applyCareerEffects({ expertise: 4, trust: 3, budget: 2 });
+    if (!state.career.projects.includes(worldIndex)) {
+      state.career.projects.push(worldIndex);
+    }
   }
   state.unlockedWorld = Math.min(worlds.length - 1, Math.max(state.unlockedWorld, worldIndex + 1));
   state.activeSession = null;
@@ -1365,6 +1658,8 @@ function resumeActiveSession() {
   session.wordDrafts ||= {};
   session.wordRacks ||= {};
   session.wordHints ||= {};
+  session.decisionResolved ??= Boolean(state.career.decisions[session.worldIndex]);
+  session.eventChoice ??= state.career.decisions[session.worldIndex] ?? null;
   session.questions = session.questions.map((question) => {
     const originalIndex = worlds[session.worldIndex].questions.findIndex((item) => item.question === question.question);
     return { ...question, ...worldWordPuzzles[session.worldIndex][Math.max(0, originalIndex)] };
@@ -1373,7 +1668,13 @@ function resumeActiveSession() {
   elements.game.classList.add("visible");
   elements.game.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  if (resumeStatus === "result") {
+  updateProjectStatus();
+  if (resumeStatus === "decision") {
+    session.decisionResolved = false;
+    showCareerEvent();
+  } else if (resumeStatus === "decision-feedback") {
+    renderQuestion();
+  } else if (resumeStatus === "result") {
     showWorldResult({ recordAttempt: false });
   } else if (resumeStatus === "feedback" && lastFeedback) {
     renderQuestion();
@@ -1429,11 +1730,11 @@ function closeWelcome() {
 
 function getProfileRank() {
   const mastered = state.completedWorlds.length;
-  if (mastered >= 10) return "Architecte IA Soroboss";
-  if (mastered >= 5) return "Analyste IA confirmé";
-  if (mastered >= 3) return "Explorateur avancé";
-  if (mastered >= 1) return "Explorateur IA";
-  return "Apprenti de l’IA";
+  if (mastered >= 10) return getCareerRole();
+  if (mastered >= 5) return "Analyste IA confirmé · Studio en croissance";
+  if (mastered >= 3) return "Concepteur IA en progression";
+  if (mastered >= 1) return "Explorateur de projets IA";
+  return getCareerRole();
 }
 
 function openRegister() {
@@ -1547,6 +1848,7 @@ function openProfile(milestone = false) {
   $("#profile-level").textContent = Math.floor(state.xp / 100) + 1;
   $("#profile-xp").textContent = `${state.xp} XP`;
   $("#profile-chapter").textContent = mastered >= 10 ? "Maîtrise complète" : advanced ? "Expert" : "Initiation";
+  renderCareerStats($("#profile-career-stats"), true);
   $("#profile-message").textContent = mastered >= 10
     ? `${state.player.firstname}, tu as maîtrisé les dix mondes. Le mode entraînement expert te propose maintenant des notions aléatoires pour entretenir tes acquis sans perdre ta progression.`
     : mastered >= 5
@@ -1702,6 +2004,11 @@ elements.answers.addEventListener("click", (event) => {
   if (!button) return;
   answerQuestion(Number(button.dataset.answer));
 });
+elements.careerChoiceList.addEventListener("click", (event) => {
+  const choice = event.target.closest(".career-choice");
+  if (choice) chooseCareerStrategy(Number(choice.dataset.choice));
+});
+elements.careerEventContinue.addEventListener("click", closeCareerEventAndPlay);
 elements.letterRack.addEventListener("click", (event) => {
   const tile = event.target.closest(".letter-tile");
   if (tile) selectLetter(Number(tile.dataset.letterIndex));
@@ -1729,6 +2036,7 @@ document.addEventListener("keydown", (event) => {
     || elements.welcomeModal.classList.contains("visible")
     || elements.profileModal.classList.contains("visible")
     || elements.infoModal.classList.contains("visible")
+    || elements.careerEventModal.classList.contains("visible")
   ) return;
   if (elements.game.classList.contains("visible") && isWordMission()) {
     if (event.key === "Backspace") {
@@ -1875,7 +2183,11 @@ $("#logout-player").addEventListener("click", async () => {
     showToast("La déconnexion n’a pas abouti. Réessaie dans quelques instants.", "error");
   }
   const soundPreference = state.sound;
-  state = { ...defaultState, sound: soundPreference };
+  state = {
+    ...defaultState,
+    sound: soundPreference,
+    career: { ...careerDefaults, decisions: {}, projects: [] }
+  };
   saveState();
   closeProfile();
   renderDashboard();

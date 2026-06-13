@@ -125,6 +125,7 @@ export async function saveRemoteProgress(userId, state) {
     completed_worlds: state.completedWorlds,
     profile_milestones: state.profileMilestones,
     active_session: state.activeSession,
+    simulation_state: state.career,
     last_played_at: new Date().toISOString()
   }).eq("user_id", userId);
   if (error) throw error;

@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.player_progress (
   completed_worlds INTEGER[] NOT NULL DEFAULT '{}',
   profile_milestones INTEGER[] NOT NULL DEFAULT '{}',
   active_session JSONB,
+  simulation_state JSONB NOT NULL DEFAULT '{}'::jsonb,
   last_played_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

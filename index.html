@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -76,7 +76,22 @@
         </button>
         <div class="daily-row">
           <div class="trust-mark" aria-hidden="true">✓</div>
-          <p><strong>10 mondes</strong> pour apprendre, pratiquer et vérifier ses connaissances en IA</p>
+          <p><strong>10 projets IA</strong> pour décider, construire et mesurer les conséquences de tes choix</p>
+        </div>
+        <div class="career-dashboard" id="career-dashboard" hidden>
+          <div class="career-heading">
+            <div>
+              <span>TON STUDIO IA</span>
+              <strong id="career-role">Apprenti chef de projet IA</strong>
+            </div>
+            <small id="career-projects">0 projet livré</small>
+          </div>
+          <div class="career-meters">
+            <div><span>Expertise</span><strong id="career-expertise">50</strong><i><b id="career-expertise-bar"></b></i></div>
+            <div><span>Confiance</span><strong id="career-trust">45</strong><i><b id="career-trust-bar"></b></i></div>
+            <div><span>Éthique</span><strong id="career-ethics">60</strong><i><b id="career-ethics-bar"></b></i></div>
+            <div><span>Budget</span><strong id="career-budget">40</strong><i><b id="career-budget-bar"></b></i></div>
+          </div>
         </div>
       </div>
 
@@ -219,10 +234,43 @@
             <div><span>Score</span><strong id="session-score">0</strong></div>
             <div><span>Série</span><strong id="session-streak">0</strong></div>
           </div>
+          <div class="project-status">
+            <span>PROJET EN COURS</span>
+            <strong id="project-name">Assistant IA utile</strong>
+            <p id="project-status-text">Une décision stratégique lancera ce projet.</p>
+          </div>
         </aside>
       </div>
     </div>
   </section>
+
+  <div class="modal-backdrop career-event-backdrop" id="career-event-modal" aria-hidden="true">
+    <article class="lesson-card career-event-card" role="dialog" aria-modal="true" aria-labelledby="career-event-title">
+      <span class="eyebrow"><span></span> DÉCISION DE PROJET</span>
+      <div class="career-event-heading">
+        <div class="career-event-icon" id="career-event-icon">⌁</div>
+        <div>
+          <small id="career-event-client">CLIENT · ASSOCIATION LOCALE</small>
+          <h2 id="career-event-title">Ton premier mandat IA</h2>
+        </div>
+      </div>
+      <p class="lesson-intro" id="career-event-situation"></p>
+      <div class="career-choice-list" id="career-choice-list"></div>
+      <div class="career-consequence" id="career-consequence" hidden>
+        <span id="career-consequence-label">CONSÉQUENCE</span>
+        <h3 id="career-consequence-title"></h3>
+        <p id="career-consequence-text"></p>
+        <div class="impact-chips" id="career-impact-chips"></div>
+        <div class="decision-lesson">
+          <span>À RETENIR</span>
+          <p id="career-decision-lesson"></p>
+        </div>
+      </div>
+      <button class="primary-button full-button" id="career-event-continue" type="button" hidden>
+        Entrer dans le projet <span>→</span>
+      </button>
+    </article>
+  </div>
 
   <div class="modal-backdrop" id="lesson-modal" aria-hidden="true">
     <article class="lesson-card" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
@@ -262,6 +310,10 @@
           <small id="result-reward-label">RÉCOMPENSE</small>
           <strong id="result-reward-text">+50 XP et un nouveau monde</strong>
         </div>
+      </div>
+      <div class="project-report" id="project-report">
+        <span>IMPACT SUR TON STUDIO IA</span>
+        <div id="project-report-stats"></div>
       </div>
       <div class="next-world-preview" id="next-world-preview" hidden>
         <span>PROCHAIN DÉFI</span>
@@ -320,26 +372,26 @@
         </div>
       </div>
       <p class="welcome-intro">
-        Ici, tu apprends à comprendre l’intelligence artificielle, à reconnaître ses possibilités
-        et ses limites, et à l’utiliser avec plus de confiance et de responsabilité.
+        Tu diriges désormais ton propre studio IA. Chaque monde te confie un projet concret:
+        tes décisions influencent sa fiabilité, son utilité, son éthique et ses ressources.
       </p>
       <div class="welcome-grid">
         <div>
           <strong>01</strong>
-          <span>Réponds avant la fin du minuteur</span>
+          <span>Choisis une stratégie pour lancer le projet</span>
         </div>
         <div>
           <strong>02</strong>
-          <span>Atteins au moins 80 % pour avancer</span>
+          <span>Relève les missions pour prouver tes choix</span>
         </div>
         <div>
           <strong>03</strong>
-          <span>Transforme chaque erreur en cours pratique</span>
+          <span>Atteins 80 % et développe ton studio IA</span>
         </div>
       </div>
       <div class="welcome-benefit">
         <span>POURQUOI CE JEU EST IMPORTANT</span>
-        <p>Plus tu progresses, plus tu développes ton esprit critique, ton vocabulaire numérique et ta capacité à prendre de bonnes décisions face aux outils d’IA.</p>
+        <p>Tu ne mémorises pas seulement des réponses: tu apprends à cadrer un besoin, gérer les risques et construire une solution IA réellement utile.</p>
       </div>
       <div class="resume-summary" id="resume-summary" hidden>
         <span>PARTIE EN COURS</span>
@@ -366,6 +418,10 @@
         <div><span>Expérience</span><strong id="profile-xp">0 XP</strong></div>
         <div><span>Parcours</span><strong id="profile-chapter">Initiation</strong></div>
       </div>
+      <div class="profile-career">
+        <span>ÉQUILIBRE DU STUDIO IA</span>
+        <div id="profile-career-stats"></div>
+      </div>
       <p class="profile-message" id="profile-message"></p>
       <button class="primary-button full-button" id="profile-action">Continuer mon aventure <span>→</span></button>
       <button class="text-button profile-logout" id="logout-player">Changer de joueur</button>
@@ -379,9 +435,9 @@
       <span class="eyebrow"><span></span> RÈGLES DU JEU</span>
       <h2 id="info-title">Apprendre en jouant</h2>
       <div class="rules-grid">
-        <div><strong>01</strong><p>Fais avancer ton pion sur le plateau en réussissant des missions IA.</p></div>
-        <div><strong>02</strong><p>Construis des mots avec ton chevalet, complète des grilles et prends des décisions.</p></div>
-        <div><strong>03</strong><p>Obtiens au moins 80 %. Sinon, lis les cours de tes erreurs avant de recommencer.</p></div>
+        <div><strong>01</strong><p>Reçois un projet IA et choisis une stratégie avec de vraies conséquences.</p></div>
+        <div><strong>02</strong><p>Développe ton expertise, la confiance, l’éthique et le budget de ton studio.</p></div>
+        <div><strong>03</strong><p>Valide ta stratégie avec des missions. À moins de 80 %, étudie tes erreurs et recommence.</p></div>
       </div>
     </article>
   </div>

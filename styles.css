@@ -197,6 +197,26 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .daily-row { margin-top: 50px; display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; }
 .daily-row p { margin: 0; }
 .daily-row strong { color: white; }
+.career-dashboard {
+  width: min(600px, 100%); margin-top: 22px; padding: 16px; border: 1px solid rgba(24,217,218,.2);
+  border-radius: 14px; background: linear-gradient(145deg, rgba(24,217,218,.07), rgba(7,24,49,.72));
+}
+.career-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.career-heading span, .career-dashboard small {
+  display: block; color: var(--cyan); font-size: 8px; font-weight: 800; letter-spacing: .14em;
+}
+.career-heading strong { display: block; margin-top: 4px; font: 700 14px "Space Grotesk"; }
+.career-dashboard small { color: var(--muted); text-align: right; }
+.career-meters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.career-meters > div { position: relative; padding: 10px; border-radius: 9px; background: rgba(3,15,33,.55); }
+.career-meters span { color: #93a7bd; font-size: 8px; }
+.career-meters strong { float: right; color: white; font: 700 12px "Space Grotesk"; }
+.career-meters i, .career-stat i {
+  display: block; height: 4px; margin-top: 8px; overflow: hidden; border-radius: 10px; background: #17304e;
+}
+.career-meters b, .career-stat b {
+  display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green));
+}
 .trust-mark {
   width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: 50%;
   color: #052719; background: var(--green); font-weight: 800; box-shadow: 0 0 18px rgba(75,243,162,.2);
@@ -287,6 +307,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   margin: 15px 0 19px; background: rgba(24,217,218,.1); color: var(--cyan); font-size: 24px;
 }
 .world-card h3 { font-family: "Space Grotesk"; margin: 0 0 8px; font-size: 17px; }
+.world-project {
+  display: block; margin: -8px 0 8px; color: var(--yellow); font-size: 7px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+}
 .world-card p { color: var(--muted); margin: 0; font-size: 12px; line-height: 1.55; }
 .world-state { position: absolute; top: 22px; right: 18px; color: var(--muted); font-size: 11px; }
 .world-card.completed .world-state { color: var(--green); }
@@ -494,6 +518,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .session-stats div:first-child { border-right: 1px solid var(--line); }
 .session-stats span { color: var(--muted); font-size: 10px; display: block; }
 .session-stats strong { color: white; font-size: 21px; margin-top: 4px; display: block; font-family: "Space Grotesk"; }
+.project-status {
+  margin-top: 16px; padding: 13px; border: 1px solid rgba(255,220,93,.2); border-radius: 11px;
+  background: rgba(255,220,93,.045); text-align: left;
+}
+.project-status > span { color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .13em; }
+.project-status strong { display: block; margin-top: 5px; font: 700 13px "Space Grotesk"; }
+.project-status p { margin: 5px 0 0; color: #8fa2b8; font-size: 9px; line-height: 1.4; }
 
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; padding: 20px;
@@ -518,6 +549,42 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .lesson-example span { color: var(--yellow); }
 .lesson-content p, .lesson-example p { color: #c5d1df; line-height: 1.6; margin: 8px 0 0; }
 .full-button { width: 100%; margin-top: 24px; }
+.career-event-backdrop { z-index: 35; }
+.career-event-card { width: min(700px, 100%); border-color: rgba(24,217,218,.3); }
+.career-event-heading { display: flex; align-items: center; gap: 16px; margin-top: 22px; }
+.career-event-icon {
+  width: 60px; height: 60px; flex: 0 0 60px; display: grid; place-items: center; border-radius: 17px;
+  color: var(--cyan); background: rgba(24,217,218,.1); border: 1px solid rgba(24,217,218,.25); font-size: 25px;
+}
+.career-event-heading small { color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .14em; }
+.career-choice-list { display: grid; gap: 10px; margin-top: 22px; }
+.career-choice {
+  width: 100%; min-height: 72px; padding: 13px 15px; display: grid; grid-template-columns: 38px 1fr auto;
+  align-items: center; gap: 13px; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(5,20,42,.75); text-align: left; cursor: pointer; transition: .2s ease;
+}
+.career-choice:hover { transform: translateX(4px); border-color: rgba(24,217,218,.5); background: rgba(24,217,218,.06); }
+.career-choice > span {
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px;
+  color: var(--cyan); background: rgba(24,217,218,.1); font: 700 13px "Space Grotesk";
+}
+.career-choice strong { display: block; font: 700 14px "Space Grotesk"; }
+.career-choice small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.career-choice > b { color: var(--cyan); font-size: 18px; }
+.career-consequence {
+  margin-top: 22px; padding: 20px; border: 1px solid rgba(24,217,218,.24); border-radius: 14px;
+  background: rgba(24,217,218,.055);
+}
+.career-consequence > span { color: var(--cyan); font-size: 8px; font-weight: 800; letter-spacing: .15em; }
+.career-consequence h3 { margin: 7px 0; font: 700 20px "Space Grotesk"; }
+.career-consequence > p, .decision-lesson p { color: #b8c6d6; font-size: 13px; line-height: 1.6; }
+.impact-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 15px 0; }
+.impact-chips span { padding: 6px 9px; border-radius: 20px; font-size: 9px; font-weight: 800; }
+.impact-chips .positive { color: var(--green); background: rgba(75,243,162,.09); }
+.impact-chips .negative { color: var(--red); background: rgba(255,100,127,.09); }
+.decision-lesson { padding: 13px 15px; border-left: 3px solid var(--yellow); background: rgba(255,220,93,.055); }
+.decision-lesson span { color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .14em; }
+.decision-lesson p { margin: 6px 0 0; }
 .result-card { text-align: center; border-color: rgba(24,217,218,.25); }
 .result-card.failed { border-color: rgba(255,100,127,.3); }
 .result-score {
@@ -538,6 +605,20 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .result-reward strong, .next-world-preview strong { display: block; margin-top: 4px; font: 700 14px "Space Grotesk"; }
 .result-card.failed .result-reward { border-color: rgba(24,217,218,.2); background: rgba(24,217,218,.05); }
 .result-card.failed .result-reward small { color: var(--cyan); }
+.project-report, .profile-career {
+  margin-top: 16px; padding: 15px; border: 1px solid rgba(24,217,218,.2); border-radius: 12px;
+  background: rgba(24,217,218,.045); text-align: left;
+}
+.project-report > span, .profile-career > span {
+  color: var(--cyan); font-size: 8px; font-weight: 800; letter-spacing: .14em;
+}
+#project-report-stats, #profile-career-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 11px;
+}
+#project-report-stats > div { padding: 9px; border-radius: 8px; background: rgba(3,15,33,.55); text-align: center; }
+#project-report-stats span, .career-stat span { display: block; color: var(--muted); font-size: 8px; }
+#project-report-stats strong, .career-stat strong { display: block; margin-top: 4px; font: 700 16px "Space Grotesk"; }
+.career-stat { padding: 9px; border-radius: 8px; background: rgba(3,15,33,.55); }
 .next-world-preview { border-color: rgba(24,217,218,.24); background: rgba(24,217,218,.055); }
 .next-world-preview > span { color: var(--cyan); }
 .next-world-preview p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
@@ -662,6 +743,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .mission-panel blockquote { grid-column: 2; grid-row: 1; margin: 0; }
   .mission-goal { grid-column: 1 / -1; grid-row: 2; margin: 0; }
   .session-stats { grid-column: 3; grid-row: 1; border: 0; padding: 0; min-width: 150px; }
+  .adventure-board, .project-status { grid-column: 1 / -1; }
 }
 
 @media (max-width: 650px) {
@@ -705,6 +787,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .chip-two { right: 3%; }
   .chip-three { right: 7%; }
   .daily-row { margin-top: 30px; }
+  .career-dashboard { margin-top: 18px; padding: 13px; }
+  .career-heading { align-items: flex-start; }
+  .career-heading strong { max-width: 220px; font-size: 13px; }
+  .career-meters { grid-template-columns: 1fr 1fr; }
   .journey-section { padding: 48px 0 70px; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; margin-bottom: 24px; }
   .section-heading h2 { font-size: 28px; }
@@ -785,6 +871,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .mission-goal { grid-column: 1 / -1; grid-row: 4; margin: 1px 0 0; padding: 12px; }
   .session-stats { grid-column: 1 / -1; grid-row: 5; display: grid; padding-top: 12px; }
   .session-stats strong { font-size: 18px; }
+  .project-status { grid-column: 1 / -1; grid-row: 6; margin-top: 0; }
   .modal-backdrop {
     align-items: flex-end; padding: 0; overflow: hidden;
   }
@@ -802,6 +889,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .lesson-top { align-items: flex-start; }
   .lesson-icon { width: 46px; height: 46px; flex-basis: 46px; }
   .lesson-intro { font-size: 14px; line-height: 1.55; }
+  .career-event-heading { align-items: flex-start; gap: 12px; }
+  .career-event-icon { width: 50px; height: 50px; flex-basis: 50px; }
+  .career-choice { grid-template-columns: 34px 1fr auto; padding: 11px; gap: 10px; }
+  .career-choice > span { width: 34px; height: 34px; }
+  .career-choice:hover { transform: none; }
+  .career-consequence { padding: 16px; }
+  #project-report-stats, #profile-career-stats { grid-template-columns: 1fr 1fr; }
   .full-button { min-height: 56px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid input, .otp-field input { font-size: 16px; }
