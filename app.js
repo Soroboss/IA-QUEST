@@ -4,11 +4,15 @@ import {
   getFriendlyAuthError,
   getCurrentAccount,
   loadRemotePlayer,
+  exchangePasswordResetCode,
+  resetAccountPassword,
   saveRemoteProgress,
   saveWorldAttempt,
   signInAccount,
+  signInWithGoogle,
   signOutAccount,
   signUpAccount,
+  sendPasswordReset,
   verifyAccount
 } from "./insforge.js";
 
@@ -632,6 +636,8 @@ const defaultState = {
 let state = loadState();
 let authMode = "register";
 let pendingRegistration = null;
+let oauthAccount = null;
+let pendingPasswordReset = null;
 let remoteSaveTimer = null;
 let audioContext = null;
 let masterGain = null;
@@ -732,6 +738,9 @@ const elements = {
   registerForm: $("#register-form"),
   verifyModal: $("#verify-modal"),
   verifyForm: $("#verify-form"),
+  resetModal: $("#reset-modal"),
+  resetRequestForm: $("#reset-request-form"),
+  resetConfirmForm: $("#reset-confirm-form"),
   welcomeModal: $("#welcome-modal"),
   profileModal: $("#profile-modal"),
   infoModal: $("#info-modal"),
@@ -1783,6 +1792,7 @@ function openRegister() {
 function setAuthMode(mode) {
   authMode = mode;
   const isLogin = mode === "login";
+  const isProfileCompletion = mode === "oauth-profile";
   ["#register-firstname", "#register-lastname", "#register-phone"].forEach((selector) => {
     const input = $(selector);
     input.required = !isLogin;
@@ -1791,10 +1801,18 @@ function setAuthMode(mode) {
   $("#register-consent").required = !isLogin;
   $("#register-consent").closest("label").hidden = isLogin;
   $(".privacy-note").hidden = isLogin;
-  $("#auth-eyebrow").textContent = isLogin ? "CONNEXION JOUEUR" : "CRÉER MON PROFIL";
+  $("#identifier-field").hidden = isProfileCompletion;
+  $("#register-email").required = !isProfileCompletion;
+  $("#register-password").closest("label").hidden = isProfileCompletion;
+  $("#register-password").required = !isProfileCompletion;
+  $("#auth-eyebrow").textContent = isLogin
+    ? "CONNEXION JOUEUR"
+    : isProfileCompletion ? "FINALISER MON PROFIL" : "CRÉER MON PROFIL";
   $("#auth-intro").textContent = isLogin
     ? "Entre l’adresse email de ton compte, puis ton mot de passe."
-    : "Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.";
+    : isProfileCompletion
+      ? "Ton compte Google est confirmé. Ajoute ces informations pour sauvegarder ta progression."
+      : "Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.";
   $("#identifier-label").textContent = "Adresse email";
   $("#register-email").type = "email";
   $("#register-email").placeholder = "nom@exemple.com";
@@ -1806,10 +1824,16 @@ function setAuthMode(mode) {
   $("#register-password").placeholder = isLogin
     ? "Ton mot de passe"
     : "10 caractères, avec majuscule, minuscule et chiffre";
-  $("#register-title").textContent = isLogin ? "Reprendre mon aventure" : "Bienvenue dans IA Quest";
+  $("#register-title").textContent = isLogin
+    ? "Reprendre mon aventure"
+    : isProfileCompletion ? "Une dernière étape" : "Bienvenue dans IA Quest";
   $("#register-submit").innerHTML = isLogin
     ? `Se connecter <span>→</span>`
-    : `Créer mon profil <span>→</span>`;
+    : isProfileCompletion ? `Enregistrer et commencer <span>→</span>` : `Créer mon profil <span>→</span>`;
+  $("#show-login").hidden = isProfileCompletion;
+  $("#forgot-password").hidden = !isLogin;
+  $("#auth-divider").hidden = isProfileCompletion;
+  $("#google-login").hidden = isProfileCompletion;
   $("#show-login").textContent = isLogin ? "Créer un nouveau compte" : "J’ai déjà un compte";
 }
 
@@ -1828,6 +1852,39 @@ function closeVerification() {
   document.body.style.overflow = "";
 }
 
+function openPasswordReset() {
+  closeRegister();
+  pendingPasswordReset = null;
+  elements.resetRequestForm.hidden = false;
+  elements.resetConfirmForm.hidden = true;
+  $("#reset-title").textContent = "Retrouve ton aventure";
+  $("#reset-intro").textContent = "Entre l’adresse email de ton compte. Nous t’enverrons un code sécurisé.";
+  elements.resetModal.classList.add("visible");
+  elements.resetModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#reset-email").focus(), 50);
+}
+
+function closePasswordReset({ returnToLogin = false } = {}) {
+  elements.resetModal.classList.remove("visible");
+  elements.resetModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (returnToLogin) {
+    openRegister();
+    setAuthMode("login");
+  }
+}
+
+function openOAuthProfileCompletion(user) {
+  oauthAccount = user;
+  elements.registerForm.reset();
+  setAuthMode("oauth-profile");
+  elements.registerModal.classList.add("visible");
+  elements.registerModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#register-firstname").focus(), 50);
+}
+
 async function finishAuthenticatedPlayer(user, playerData = null) {
   if (user.emailVerified === false) {
     throw new Error("Ton adresse email doit être vérifiée avant la connexion.");
@@ -1838,6 +1895,10 @@ async function finishAuthenticatedPlayer(user, playerData = null) {
     ({ player, progress } = await loadRemotePlayer(user.id));
   }
   if (!player) {
+    if (user.providers?.includes("google")) {
+      openOAuthProfileCompletion(user);
+      return;
+    }
     throw new Error("Le profil joueur est incomplet. Crée ton profil pour continuer.");
   }
   applyRemoteState(user, player, progress);
@@ -2073,6 +2134,7 @@ document.addEventListener("keydown", (event) => {
     || elements.resultModal.classList.contains("visible")
     || elements.registerModal.classList.contains("visible")
     || elements.verifyModal.classList.contains("visible")
+    || elements.resetModal.classList.contains("visible")
     || elements.welcomeModal.classList.contains("visible")
     || elements.profileModal.classList.contains("visible")
     || elements.infoModal.classList.contains("visible")
@@ -2151,6 +2213,25 @@ elements.registerForm.addEventListener("submit", async (event) => {
   const identifier = $("#register-email").value.trim();
   const email = identifier.toLowerCase();
   const password = $("#register-password").value;
+  if (authMode === "oauth-profile") {
+    const submitButton = $("#register-submit");
+    submitButton.disabled = true;
+    try {
+      await finishAuthenticatedPlayer(oauthAccount, {
+        firstname: $("#register-firstname").value.trim(),
+        lastname: $("#register-lastname").value.trim(),
+        phone: $("#register-phone").value.trim(),
+        email: oauthAccount.email
+      });
+      oauthAccount = null;
+      elements.registerForm.reset();
+    } catch (error) {
+      showToast(getFriendlyAuthError(error, "signup"), "error");
+    } finally {
+      submitButton.disabled = false;
+    }
+    return;
+  }
   if (authMode === "register" && !isStrongPassword(password)) {
     showToast("Choisis au moins 10 caractères avec une majuscule, une minuscule et un chiffre.", "error");
     return;
@@ -2207,6 +2288,76 @@ elements.verifyForm.addEventListener("submit", async (event) => {
   }
 });
 $("#show-login").addEventListener("click", () => setAuthMode(authMode === "login" ? "register" : "login"));
+$("#close-register").addEventListener("click", closeRegister);
+$("#back-from-verify").addEventListener("click", () => {
+  closeVerification();
+  openRegister();
+  setAuthMode("register");
+});
+$("#forgot-password").addEventListener("click", openPasswordReset);
+$("#back-from-reset").addEventListener("click", () => closePasswordReset({ returnToLogin: true }));
+$("#restart-reset").addEventListener("click", () => {
+  pendingPasswordReset = null;
+  elements.resetRequestForm.hidden = false;
+  elements.resetConfirmForm.hidden = true;
+  $("#reset-email").focus();
+});
+$("#google-login").addEventListener("click", async () => {
+  const button = $("#google-login");
+  button.disabled = true;
+  try {
+    await signInWithGoogle(`${window.location.origin}/`);
+  } catch (error) {
+    showToast(getFriendlyAuthError(error, "login"), "error");
+    button.disabled = false;
+  }
+});
+elements.resetRequestForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!elements.resetRequestForm.reportValidity()) return;
+  const button = elements.resetRequestForm.querySelector("button");
+  const email = $("#reset-email").value.trim().toLowerCase();
+  button.disabled = true;
+  try {
+    await sendPasswordReset(email);
+    pendingPasswordReset = { email };
+    $("#reset-email-display").textContent = email;
+    $("#reset-title").textContent = "Choisis un nouveau mot de passe";
+    $("#reset-intro").textContent = "Entre le code reçu et ton nouveau mot de passe.";
+    elements.resetRequestForm.hidden = true;
+    elements.resetConfirmForm.hidden = false;
+    $("#reset-code").focus();
+    showToast("Si un compte correspond à cette adresse, un code vient d’être envoyé.", "success");
+  } catch (error) {
+    showToast(getFriendlyAuthError(error, "verification"), "error");
+  } finally {
+    button.disabled = false;
+  }
+});
+elements.resetConfirmForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!elements.resetConfirmForm.reportValidity() || !pendingPasswordReset) return;
+  const password = $("#reset-password").value;
+  if (!isStrongPassword(password)) {
+    showToast("Choisis au moins 10 caractères avec une majuscule, une minuscule et un chiffre.", "error");
+    return;
+  }
+  const button = elements.resetConfirmForm.querySelector("button");
+  button.disabled = true;
+  try {
+    const tokenData = await exchangePasswordResetCode(pendingPasswordReset.email, $("#reset-code").value);
+    await resetAccountPassword(password, tokenData.token);
+    elements.resetRequestForm.reset();
+    elements.resetConfirmForm.reset();
+    pendingPasswordReset = null;
+    closePasswordReset({ returnToLogin: true });
+    showToast("Mot de passe mis à jour. Tu peux maintenant te connecter.", "success");
+  } catch (error) {
+    showToast(getFriendlyAuthError(error, "verification"), "error");
+  } finally {
+    button.disabled = false;
+  }
+});
 $("#welcome-action").addEventListener("click", () => {
   const canResume = hasResumableSession();
   closeWelcome();

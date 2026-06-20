@@ -49,6 +49,37 @@ export async function signInAccount(identifier, password) {
   return data;
 }
 
+export async function signInWithGoogle(redirectTo) {
+  const client = requireClient();
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: "google",
+    redirectTo
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function sendPasswordReset(email) {
+  const client = requireClient();
+  const { data, error } = await client.auth.sendResetPasswordEmail({ email });
+  if (error) throw error;
+  return data;
+}
+
+export async function exchangePasswordResetCode(email, code) {
+  const client = requireClient();
+  const { data, error } = await client.auth.exchangeResetPasswordToken({ email, code });
+  if (error) throw error;
+  return data;
+}
+
+export async function resetAccountPassword(newPassword, token) {
+  const client = requireClient();
+  const { data, error } = await client.auth.resetPassword({ newPassword, otp: token });
+  if (error) throw error;
+  return data;
+}
+
 export function getFriendlyAuthError(error, context = "account") {
   const code = String(error?.error || error?.code || "").toUpperCase();
   const status = Number(error?.statusCode || error?.status || 0);

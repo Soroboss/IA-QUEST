@@ -326,6 +326,7 @@
 
   <div class="modal-backdrop" id="register-modal" aria-hidden="true">
     <article class="lesson-card register-card" role="dialog" aria-modal="true" aria-labelledby="register-title">
+      <button class="modal-close" id="close-register" type="button" aria-label="Fermer">×</button>
       <span class="eyebrow"><span></span> <b id="auth-eyebrow">CRÉER MON PROFIL</b></span>
       <h2 id="register-title">Bienvenue dans IA Quest</h2>
       <p class="lesson-intro" id="auth-intro">Présente-toi avant de commencer. Ta progression sera enregistrée et synchronisée.</p>
@@ -340,6 +341,9 @@
         <label class="consent-field"><input id="register-consent" type="checkbox" required><span>J’accepte que mes coordonnées et ma progression soient enregistrées pour le fonctionnement du jeu.</span></label>
         <p class="privacy-note">Tes coordonnées servent uniquement à ton compte et à la synchronisation de ta progression.</p>
         <button class="primary-button full-button" id="register-submit" type="submit">Créer mon profil <span>→</span></button>
+        <button class="text-button auth-forgot" id="forgot-password" type="button" hidden>Mot de passe oublié ?</button>
+        <div class="auth-divider" id="auth-divider"><span>ou</span></div>
+        <button class="google-button" id="google-login" type="button"><span aria-hidden="true">G</span> Continuer avec Google</button>
         <button class="text-button auth-switch" id="show-login" type="button">J’ai déjà un compte</button>
       </form>
     </article>
@@ -347,12 +351,33 @@
 
   <div class="modal-backdrop" id="verify-modal" aria-hidden="true">
     <article class="lesson-card register-card" role="dialog" aria-modal="true" aria-labelledby="verify-title">
+      <button class="modal-close" id="back-from-verify" type="button" aria-label="Retour">←</button>
       <span class="eyebrow"><span></span> VÉRIFICATION EMAIL</span>
       <h2 id="verify-title">Entre le code reçu</h2>
       <p class="lesson-intro">Un code à 6 chiffres vient d’être envoyé à <strong id="verify-email"></strong>.</p>
       <form id="verify-form">
         <label class="otp-field"><span>Code de vérification</span><input id="verify-code" inputmode="numeric" autocomplete="one-time-code" required pattern="[0-9]{6}" maxlength="6" placeholder="000000"></label>
         <button class="primary-button full-button" type="submit">Vérifier et commencer <span>→</span></button>
+      </form>
+    </article>
+  </div>
+
+  <div class="modal-backdrop" id="reset-modal" aria-hidden="true">
+    <article class="lesson-card register-card" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <button class="modal-close" id="back-from-reset" type="button" aria-label="Retour">←</button>
+      <span class="eyebrow"><span></span> RÉINITIALISER MON MOT DE PASSE</span>
+      <h2 id="reset-title">Retrouve ton aventure</h2>
+      <p class="lesson-intro" id="reset-intro">Entre l’adresse email de ton compte. Nous t’enverrons un code sécurisé.</p>
+      <form id="reset-request-form">
+        <label class="otp-field"><span>Adresse email</span><input id="reset-email" type="email" autocomplete="email" required maxlength="254" placeholder="nom@exemple.com"></label>
+        <button class="primary-button full-button" type="submit">Recevoir le code <span>→</span></button>
+      </form>
+      <form id="reset-confirm-form" hidden>
+        <p class="reset-email-note">Code envoyé à <strong id="reset-email-display"></strong></p>
+        <label class="otp-field"><span>Code à 6 chiffres</span><input id="reset-code" inputmode="numeric" autocomplete="one-time-code" required pattern="[0-9]{6}" maxlength="6" placeholder="000000"></label>
+        <label class="otp-field"><span>Nouveau mot de passe</span><input id="reset-password" type="password" autocomplete="new-password" required minlength="10" maxlength="128" placeholder="10 caractères, avec majuscule, minuscule et chiffre"></label>
+        <button class="primary-button full-button" type="submit">Mettre à jour mon mot de passe <span>→</span></button>
+        <button class="text-button auth-switch" id="restart-reset" type="button">Utiliser une autre adresse</button>
       </form>
     </article>
   </div>
